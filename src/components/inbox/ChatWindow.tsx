@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -204,6 +205,15 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
               {reply}
             </Button>
           ))}
+          
+          <QuickRepliesModal
+            trigger={
+              <Button variant="outline" size="sm" className="text-xs whitespace-nowrap">
+                + Mais
+              </Button>
+            }
+            onSelectReply={(reply) => setMessage(reply.content)}
+          />
         </div>
       </div>
 

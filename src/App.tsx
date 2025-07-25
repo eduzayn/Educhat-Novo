@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import Login from "./pages/Login";
 import Inbox from "./pages/Inbox";
 import Contacts from "./pages/Contacts";
 import CRM from "./pages/CRM";
@@ -20,17 +21,22 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Inbox />} />
-            <Route path="/contatos" element={<Contacts />} />
-            <Route path="/crm" element={<CRM />} />
-            <Route path="/copiloto" element={<Copilot />} />
-            <Route path="/relatorios" element={<Reports />} />
-            <Route path="/configuracoes" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Inbox />} />
+                <Route path="/contatos" element={<Contacts />} />
+                <Route path="/crm" element={<CRM />} />
+                <Route path="/copiloto" element={<Copilot />} />
+                <Route path="/relatorios" element={<Reports />} />
+                <Route path="/configuracoes" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          } />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

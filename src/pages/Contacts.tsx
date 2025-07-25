@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { NewContactModal } from "@/components/modals/NewContactModal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -77,10 +78,12 @@ export default function Contacts() {
               </p>
             </div>
             
-            <Button className="bg-primary hover:bg-primary-hover">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Contato
-            </Button>
+            <NewContactModal 
+              onSave={(contactData) => {
+                console.log("Novo contato salvo:", contactData)
+                // Aqui adicionaria à lista de contatos
+              }}
+            />
           </div>
 
           {/* Barra de busca e filtros */}
