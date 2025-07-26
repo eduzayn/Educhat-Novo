@@ -547,13 +547,13 @@ const CRM = () => {
       <div className="flex-1 p-6">
         <Tabs defaultValue="kanban" className="h-full">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="funnels" className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Configurar Funis
-            </TabsTrigger>
             <TabsTrigger value="kanban" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Pipeline Kanban
+            </TabsTrigger>
+            <TabsTrigger value="funnels" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Configurar Funis
             </TabsTrigger>
             <TabsTrigger value="integration" className="flex items-center gap-2">
               <Workflow className="h-4 w-4" />
@@ -568,10 +568,6 @@ const CRM = () => {
               Analytics
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="funnels" className="h-full">
-            <MultipleFunnels onFunnelChange={handleFunnelChange} />
-          </TabsContent>
 
           <TabsContent value="kanban" className="h-full">{" "}
             <div className="h-full">
@@ -782,6 +778,10 @@ const CRM = () => {
                 </DragDropContext>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="funnels" className="h-full">
+            <MultipleFunnels onFunnelChange={handleFunnelChange} />
           </TabsContent>
 
           <TabsContent value="integration" className="h-full">
