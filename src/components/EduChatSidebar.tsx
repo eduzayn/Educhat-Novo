@@ -12,7 +12,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -59,7 +59,15 @@ const navigation = [
 
 export function EduChatSidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const currentPath = location.pathname
+
+  const handleLogout = () => {
+    // Remover dados do usuário do localStorage
+    localStorage.removeItem('user')
+    // Redirecionar para a página de login
+    navigate('/login')
+  }
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -168,6 +176,7 @@ export function EduChatSidebar({ collapsed, onToggle }: SidebarProps) {
             size="sm"
             className="p-2 text-muted-foreground hover:text-destructive"
             title="Sair"
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
           </Button>
