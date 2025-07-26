@@ -1,6 +1,6 @@
-
 import { useState } from "react"
 import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
+import { AudioRecorder } from "@/components/inbox/AudioRecorder"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -111,6 +111,7 @@ interface ChatWindowProps {
 export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [message, setMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false)
   const [isCallActive, setIsCallActive] = useState(false)
   const [callDuration, setCallDuration] = useState("00:00")
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
@@ -124,6 +125,19 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
       // Aqui seria enviada a mensagem
       setMessage("")
     }
+  }
+
+  const handleSendAudio = (audioBlob: Blob) => {
+    // Aqui seria enviado o áudio
+    toast({
+      title: "Áudio enviado",
+      description: "Mensagem de áudio foi enviada com sucesso."
+    })
+    setShowAudioRecorder(false)
+  }
+
+  const handleCancelAudio = () => {
+    setShowAudioRecorder(false)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -500,78 +514,90 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
         </div>
       </div>
 
+      {/* Audio Recorder */}
+      {showAudioRecorder && (
+        <div className="p-4 border-t border-border bg-card">
+          <AudioRecorder
+            onSendAudio={handleSendAudio}
+            onCancel={handleCancelAudio}
+          />
+        </div>
+      )}
+
       {/* Input de mensagem */}
-      <div className="p-4 border-t border-border bg-card">
-        <div className="flex items-end space-x-2">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 border border-border rounded-lg p-2 focus-within:ring-2 focus-within:ring-primary">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-1"
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Digite sua mensagem..."
-                className="border-0 focus:ring-0 focus-visible:ring-0 p-0"
-              />
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`p-1 ${isRecording ? "text-destructive" : ""}`}
-                onClick={() => setIsRecording(!isRecording)}
-              >
-                <Mic className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            {/* Sugestão de IA com Base de Conhecimento */}
-            <div className="mt-2 space-y-2">
-              <div className="p-2 bg-primary/5 rounded-lg border border-primary/20">
-                <div className="flex items-start space-x-2">
-                  <Bot className="h-4 w-4 text-primary mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-xs text-primary font-medium">Sugestão da IA:</p>
-                    <p className="text-xs text-primary/80 mt-1">
-                      "Baseado no histórico, sugiro oferecer desconto de 10% para finalizar a venda."
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-primary p-1">
-                    <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </div>
+      {!showAudioRecorder && (
+        <div className="p-4 border-t border-border bg-card">
+          <div className="flex items-end space-x-2">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 border border-border rounded-lg p-2 focus-within:ring-2 focus-within:ring-primary">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-1"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Digite sua mensagem..."
+                  className="border-0 focus:ring-0 focus-visible:ring-0 p-0"
+                />
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-1"
+                  onClick={() => setShowAudioRecorder(true)}
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
               </div>
               
-              {/* Knowledge Indicator Example */}
-              <KnowledgeIndicator
-                usedKnowledge={true}
-                knowledgeSources={["Política de Desconto", "Tabela de Preços", "FAQ - Vendas"]}
-                confidence={0.92}
-                onViewSources={() => {
-                  toast({
-                    title: "Fontes da resposta",
-                    description: "Consulte a aba Base de Conhecimento para mais detalhes."
-                  })
-                }}
-              />
+              {/* Sugestão de IA com Base de Conhecimento */}
+              <div className="mt-2 space-y-2">
+                <div className="p-2 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="flex items-start space-x-2">
+                    <Bot className="h-4 w-4 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs text-primary font-medium">Sugestão da IA:</p>
+                      <p className="text-xs text-primary/80 mt-1">
+                        "Baseado no histórico, sugiro oferecer desconto de 10% para finalizar a venda."
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-primary p-1">
+                      <ArrowRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Knowledge Indicator Example */}
+                <KnowledgeIndicator
+                  usedKnowledge={true}
+                  knowledgeSources={["Política de Desconto", "Tabela de Preços", "FAQ - Vendas"]}
+                  confidence={0.92}
+                  onViewSources={() => {
+                    toast({
+                      title: "Fontes da resposta",
+                      description: "Consulte a aba Base de Conhecimento para mais detalhes."
+                    })
+                  }}
+                />
+              </div>
             </div>
+            
+            <Button
+              onClick={handleSendMessage}
+              disabled={!message.trim()}
+              className="px-4"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
-          
-          <Button
-            onClick={handleSendMessage}
-            disabled={!message.trim()}
-            className="px-4"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
         </div>
-      </div>
+      )}
     </div>
   )
 }
