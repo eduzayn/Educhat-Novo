@@ -20,7 +20,11 @@ import {
   Target,
   Trash2,
   Edit,
-  Clock
+  Clock,
+  Brain,
+  Key,
+  Shield,
+  ExternalLink
 } from "lucide-react"
 
 type Automation = {
@@ -112,6 +116,23 @@ export default function Copilot() {
       start: "08:00",
       end: "18:00",
       message: "Nosso horário de atendimento é das 8h às 18h. Retornaremos em breve!"
+    },
+    aiIntegrations: {
+      openai: {
+        enabled: false,
+        apiKey: localStorage.getItem('openai_api_key') || '',
+        model: 'gpt-4.1-2025-04-14'
+      },
+      perplexity: {
+        enabled: false,
+        apiKey: localStorage.getItem('perplexity_api_key') || '',
+        model: 'llama-3.1-sonar-small-128k-online'
+      },
+      anthropic: {
+        enabled: false,
+        apiKey: localStorage.getItem('anthropic_api_key') || '',
+        model: 'claude-sonnet-4-20250514'
+      }
     }
   })
 
@@ -255,6 +276,29 @@ export default function Copilot() {
     toast({
       title: "Configuração atualizada",
       description: "As configurações foram salvas."
+    })
+  }
+
+  const handleAIIntegrationChange = (provider: string, field: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      aiIntegrations: {
+        ...prev.aiIntegrations,
+        [provider]: {
+          ...prev.aiIntegrations[provider as keyof typeof prev.aiIntegrations],
+          [field]: value
+        }
+      }
+    }))
+    
+    // Save API key to localStorage
+    if (field === 'apiKey' && value) {
+      localStorage.setItem(`${provider}_api_key`, value)
+    }
+    
+    toast({
+      title: "Integração atualizada",
+      description: `Configurações do ${provider} foram salvas.`
     })
   }
 
@@ -658,7 +702,196 @@ export default function Copilot() {
       </div>
 
       {/* Configurações Avançadas */}
-      <div className="px-6 pb-6">
+      <div className="px-6 pb-6 space-y-6">
+        {/* Configurações de IA */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Brain className="h-5 w-5 mr-2" />
+              Integrações de IA
+            </CardTitle>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+              <div className="flex items-start space-x-2">
+                <Shield className="h-4 w-4 text-amber-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-800">Segurança das API Keys</p>
+                  <p className="text-amber-700 mt-1">
+                    Para maior segurança, recomendamos conectar ao Supabase onde as chaves ficam protegidas no servidor.
+                    <a href="https://docs.lovable.dev/integrations/supabase" target="_blank" rel="noopener noreferrer" className="inline-flex items-center ml-1 text-blue-600 hover:text-blue-800">
+                      Integrar Supabase
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* OpenAI GPT */}
+            <div className="border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="font-medium text-foreground flex items-center">
+                    <div className="w-6 h-6 bg-green-100 rounded mr-2 flex items-center justify-center">
+                      <span className="text-xs font-bold text-green-700">AI</span>
+                    </div>
+                    OpenAI GPT
+                  </h4>
+                  <p className="text-xs text-muted-foreground">Configure a integração com GPT-4</p>
+                </div>
+                <Switch 
+                  checked={settings.aiIntegrations.openai.enabled}
+                  onCheckedChange={(checked) => handleAIIntegrationChange('openai', 'enabled', checked)}
+                />
+              </div>
+              
+              {settings.aiIntegrations.openai.enabled && (
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm">API Key</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="password"
+                        value={settings.aiIntegrations.openai.apiKey}
+                        onChange={(e) => handleAIIntegrationChange('openai', 'apiKey', e.target.value)}
+                        placeholder="sk-..."
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm">Modelo</Label>
+                    <Select 
+                      value={settings.aiIntegrations.openai.model}
+                      onValueChange={(value) => handleAIIntegrationChange('openai', 'model', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (2025) - Recomendado</SelectItem>
+                        <SelectItem value="o3-2025-04-16">O3 (2025) - Raciocínio Avançado</SelectItem>
+                        <SelectItem value="o4-mini-2025-04-16">O4 Mini - Rápido</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Perplexity AI */}
+            <div className="border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="font-medium text-foreground flex items-center">
+                    <div className="w-6 h-6 bg-blue-100 rounded mr-2 flex items-center justify-center">
+                      <span className="text-xs font-bold text-blue-700">P</span>
+                    </div>
+                    Perplexity AI
+                  </h4>
+                  <p className="text-xs text-muted-foreground">IA com acesso à internet em tempo real</p>
+                </div>
+                <Switch 
+                  checked={settings.aiIntegrations.perplexity.enabled}
+                  onCheckedChange={(checked) => handleAIIntegrationChange('perplexity', 'enabled', checked)}
+                />
+              </div>
+              
+              {settings.aiIntegrations.perplexity.enabled && (
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm">API Key</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="password"
+                        value={settings.aiIntegrations.perplexity.apiKey}
+                        onChange={(e) => handleAIIntegrationChange('perplexity', 'apiKey', e.target.value)}
+                        placeholder="pplx-..."
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm">Modelo</Label>
+                    <Select 
+                      value={settings.aiIntegrations.perplexity.model}
+                      onValueChange={(value) => handleAIIntegrationChange('perplexity', 'model', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="llama-3.1-sonar-small-128k-online">Llama 3.1 Small (8B) - Rápido</SelectItem>
+                        <SelectItem value="llama-3.1-sonar-large-128k-online">Llama 3.1 Large (70B) - Balanceado</SelectItem>
+                        <SelectItem value="llama-3.1-sonar-huge-128k-online">Llama 3.1 Huge (405B) - Máximo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Anthropic Claude */}
+            <div className="border border-border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="font-medium text-foreground flex items-center">
+                    <div className="w-6 h-6 bg-purple-100 rounded mr-2 flex items-center justify-center">
+                      <span className="text-xs font-bold text-purple-700">C</span>
+                    </div>
+                    Anthropic Claude
+                  </h4>
+                  <p className="text-xs text-muted-foreground">IA com foco em segurança e precisão</p>
+                </div>
+                <Switch 
+                  checked={settings.aiIntegrations.anthropic.enabled}
+                  onCheckedChange={(checked) => handleAIIntegrationChange('anthropic', 'enabled', checked)}
+                />
+              </div>
+              
+              {settings.aiIntegrations.anthropic.enabled && (
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm">API Key</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="password"
+                        value={settings.aiIntegrations.anthropic.apiKey}
+                        onChange={(e) => handleAIIntegrationChange('anthropic', 'apiKey', e.target.value)}
+                        placeholder="sk-ant-..."
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm">Modelo</Label>
+                    <Select 
+                      value={settings.aiIntegrations.anthropic.model}
+                      onValueChange={(value) => handleAIIntegrationChange('anthropic', 'model', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 - Recomendado</SelectItem>
+                        <SelectItem value="claude-opus-4-20250514">Claude Opus 4 - Máximo</SelectItem>
+                        <SelectItem value="claude-3-5-haiku-20241022">Claude Haiku - Rápido</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Configurações Gerais */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
