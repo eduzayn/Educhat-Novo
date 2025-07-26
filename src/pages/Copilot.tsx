@@ -31,65 +31,7 @@ import {
   ExternalLink
 } from "lucide-react"
 
-type Automation = {
-  id: number
-  name: string
-  trigger: string
-  action: string
-  active: boolean
-  team: string
-  description?: string
-  message?: string
-}
-
-type Keyword = {
-  id: number
-  word: string
-  team: string
-  response: string
-}
-
 export default function Copilot() {
-  // States for automations
-  const [automations, setAutomations] = useState<Automation[]>([
-    {
-      id: 1,
-      name: "Saudação Automática",
-      trigger: "Nova conversa",
-      action: "Enviar mensagem de boas-vindas",
-      active: true,
-      team: "Vendas",
-      description: "Envia uma mensagem de boas-vindas para novos contatos",
-      message: "Olá! Bem-vindo à nossa empresa. Como posso ajudá-lo hoje?"
-    }
-  ])
-
-  // States for keywords
-  const [keywords, setKeywords] = useState<Keyword[]>([
-    { id: 1, word: "preço", team: "Vendas", response: "Nossos preços variam conforme o produto. Posso enviar uma cotação personalizada!" }
-  ])
-
-  // Form states
-  const [newKeyword, setNewKeyword] = useState("")
-  const [newResponse, setNewResponse] = useState("")
-  const [selectedTeam, setSelectedTeam] = useState("Vendas")
-  
-  // Modal states
-  const [isNewAutomationOpen, setIsNewAutomationOpen] = useState(false)
-  const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null)
-  const [editingKeyword, setEditingKeyword] = useState<Keyword | null>(null)
-  
-  // Automation form states
-  const [automationForm, setAutomationForm] = useState({
-    name: "",
-    trigger: "",
-    action: "",
-    team: "Vendas",
-    description: "",
-    message: ""
-  })
-
-  // Configuration states
   const [settings, setSettings] = useState({
     sentimentAnalysis: true,
     intelligentSuggestions: true,
@@ -192,7 +134,7 @@ export default function Copilot() {
             
             <Button className="bg-primary hover:bg-primary-hover">
               <Plus className="h-4 w-4 mr-2" />
-              Nova Automação
+              Configurar ZAIA
             </Button>
           </div>
         </div>
@@ -216,28 +158,6 @@ export default function Copilot() {
 
           <TabsContent value="knowledge" className="mt-6">
             <KnowledgeBase />
-          </TabsContent>
-
-          <TabsContent value="automations" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Automações Configuradas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Configure suas automações aqui.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="keywords" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Palavras-chave</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Configure direcionamento por palavras-chave.</p>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
