@@ -1,4 +1,5 @@
 import { toast } from "@/hooks/use-toast"
+import { knowledgeBaseService } from "./KnowledgeBaseService"
 
 interface AIConfig {
   openai: {
@@ -52,6 +53,8 @@ interface AIResponse {
   shouldTransfer: boolean
   audioUrl?: string
   confidence?: number
+  usedKnowledge?: boolean
+  knowledgeSources?: string[]
 }
 
 class EnhancedAIService {
@@ -123,13 +126,14 @@ class EnhancedAIService {
   }
 
   // Generate system prompt based on agent type
-  getSystemPrompt(agentType: AgentType): string {
+  getSystemPrompt(agentType: AgentType, knowledgeContext?: string): string {
     const basePrompt = `Você é ZAIA, assistente virtual especializado da empresa. Seja sempre educado, profissional e prestativo. Responda de forma concisa e objetiva.`
+    
+    let agentSpecificPrompt = ""
     
     switch (agentType.type) {
       case 'sdr':
-        return `${basePrompt}
-
+        agentSpecificPrompt = `
 FUNÇÃO: SDR (Sales Development Representative) - Qualificação de leads e geração de oportunidades.
 
 OBJETIVOS:
@@ -139,10 +143,10 @@ OBJETIVOS:
 - Nutrir relacionamento
 
 ESTILO: Consultivo, amigável, focado em entender necessidades.`
+        break
 
       case 'closer':
-        return `${basePrompt}
-
+        agentSpecificPrompt = `
 FUNÇÃO: Closer - Fechamento de vendas e negociação.
 
 OBJETIVOS:
@@ -152,10 +156,10 @@ OBJETIVOS:
 - Estruturar propostas
 
 ESTILO: Assertivo, focado em resultados, criador de urgência saudável.`
+        break
 
       case 'support':
-        return `${basePrompt}
-
+        agentSpecificPrompt = `
 FUNÇÃO: Suporte - Atendimento técnico e satisfação do cliente.
 
 OBJETIVOS:
@@ -165,10 +169,21 @@ OBJETIVOS:
 - Prevenir cancelamentos
 
 ESTILO: Paciente, empático, didático e solucionador.`
+        break
 
       default:
-        return basePrompt
+        agentSpecificPrompt = `
+FUNÇÃO: Atendimento geral e suporte ao cliente.`
     }
+
+    let fullPrompt = basePrompt + agentSpecificPrompt
+
+    // Add knowledge context if available
+    if (knowledgeContext) {
+      fullPrompt += `\n\n${knowledgeContext}`
+    }
+
+    return fullPrompt
   }
 
   // Transcribe audio using OpenAI Whisper
@@ -316,11 +331,19 @@ ESTILO: Paciente, empático, didático e solucionador.`
     }
   }
 
-  // Enhanced response generation with multimodal support
+  // Enhanced response generation with knowledge base integration
   async generateResponse(messages: Message[]): Promise<AIResponse> {
     try {
       const agentType = this.analyzeIntent(messages)
       let contextualMessages = [...messages]
+      const lastUserMessage = messages[messages.length - 1]?.content || ''
+      
+      // Search knowledge base for relevant context
+      const knowledgeSearch = knowledgeBaseService.smartSearch(lastUserMessage, agentType.type)
+      const knowledgeContext = knowledgeBaseService.buildAIContext(knowledgeSearch)
+      
+      console.log('Knowledge search results:', knowledgeSearch)
+      console.log('Knowledge context:', knowledgeContext)
       
       // Process special message types
       for (const message of messages) {
@@ -345,11 +368,11 @@ ESTILO: Paciente, empático, didático e solucionador.`
         }
       }
 
-      // Generate text response
+      // Generate text response with knowledge context
       let textResponse = ''
       
       if (this.config.openai.enabled && this.config.openai.apiKey) {
-        textResponse = await this.callOpenAI(contextualMessages, agentType)
+        textResponse = await this.callOpenAI(contextualMessages, agentType, knowledgeContext)
       } else {
         throw new Error('Nenhuma IA configurada')
       }
@@ -371,7 +394,9 @@ ESTILO: Paciente, empático, didático e solucionador.`
         agentType,
         shouldTransfer,
         audioUrl,
-        confidence: 0.9
+        confidence: knowledgeSearch.items.length > 0 ? 0.95 : 0.7,
+        usedKnowledge: knowledgeSearch.items.length > 0,
+        knowledgeSources: knowledgeSearch.items.map(item => item.title)
       }
       
     } catch (error) {
@@ -390,13 +415,13 @@ ESTILO: Paciente, empático, didático e solucionador.`
     }
   }
 
-  // Call OpenAI API (existing method, enhanced)
-  private async callOpenAI(messages: Message[], agentType: AgentType): Promise<string> {
+  // Call OpenAI API (enhanced with knowledge context)
+  private async callOpenAI(messages: Message[], agentType: AgentType, knowledgeContext?: string): Promise<string> {
     if (!this.config.openai.enabled || !this.config.openai.apiKey) {
       throw new Error('OpenAI não configurado')
     }
 
-    const systemPrompt = this.getSystemPrompt(agentType)
+    const systemPrompt = this.getSystemPrompt(agentType, knowledgeContext)
     
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {

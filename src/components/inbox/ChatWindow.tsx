@@ -12,6 +12,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
+import { enhancedAIService } from "@/components/copilot/EnhancedAIService"
+import { KnowledgeIndicator } from "@/components/copilot/KnowledgeIndicator"
 import { 
   Send, 
   Paperclip, 
@@ -429,20 +431,35 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
               </Button>
             </div>
             
-            {/* Sugestão de IA */}
-            <div className="mt-2 p-2 bg-primary-light rounded-lg border border-primary/20">
-              <div className="flex items-start space-x-2">
-                <Bot className="h-4 w-4 text-primary mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-xs text-primary font-medium">Sugestão da IA:</p>
-                  <p className="text-xs text-primary/80 mt-1">
-                    "Baseado no histórico, sugiro oferecer desconto de 10% para finalizar a venda."
-                  </p>
+            {/* Sugestão de IA com Base de Conhecimento */}
+            <div className="mt-2 space-y-2">
+              <div className="p-2 bg-primary/5 rounded-lg border border-primary/20">
+                <div className="flex items-start space-x-2">
+                  <Bot className="h-4 w-4 text-primary mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs text-primary font-medium">Sugestão da IA:</p>
+                    <p className="text-xs text-primary/80 mt-1">
+                      "Baseado no histórico, sugiro oferecer desconto de 10% para finalizar a venda."
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" className="text-primary p-1">
+                    <ArrowRight className="h-3 w-3" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" className="text-primary p-1">
-                  <ArrowRight className="h-3 w-3" />
-                </Button>
               </div>
+              
+              {/* Knowledge Indicator Example */}
+              <KnowledgeIndicator
+                usedKnowledge={true}
+                knowledgeSources={["Política de Desconto", "Tabela de Preços", "FAQ - Vendas"]}
+                confidence={0.92}
+                onViewSources={() => {
+                  toast({
+                    title: "Fontes da resposta",
+                    description: "Consulte a aba Base de Conhecimento para mais detalhes."
+                  })
+                }}
+              />
             </div>
           </div>
           
