@@ -418,7 +418,7 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
 
                     {/* Contador de não lidas */}
                     {conversation.unreadCount > 0 && (
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                      <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gray-700 text-white border-gray-600">
                         {conversation.unreadCount}
                       </Badge>
                     )}
