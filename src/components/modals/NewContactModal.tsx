@@ -20,6 +20,7 @@ import {
   AlertTriangle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useElegantToast } from "@/components/ui/elegant-toast"
 
 interface NewContactModalProps {
   trigger?: React.ReactNode
@@ -29,6 +30,7 @@ interface NewContactModalProps {
 export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
+  const elegantToast = useElegantToast()
   
   const [formData, setFormData] = useState({
     name: "",
@@ -66,22 +68,22 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      toast({ title: "Nome é obrigatório", variant: "destructive" })
+      elegantToast.validationError("Nome é obrigatório")
       return false
     }
     
     if (sendActiveMessage && !selectedChannel) {
-      toast({ title: "Selecione um canal para enviar mensagem", variant: "destructive" })
+      elegantToast.validationError("Selecione um canal para enviar mensagem")
       return false
     }
     
     if (sendActiveMessage && !activeMessage.trim()) {
-      toast({ title: "Digite a mensagem ativa", variant: "destructive" })
+      elegantToast.validationError("Digite a mensagem ativa")
       return false
     }
     
     if (selectedChannel && !activeMessage.trim()) {
-      toast({ title: "Digite a mensagem ativa", variant: "destructive" })
+      elegantToast.validationError("Digite a mensagem ativa")
       return false
     }
     
@@ -107,19 +109,12 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
       if (sendActiveMessage && selectedChannel && activeMessage) {
         const channel = whatsappChannels.find(ch => ch.id === selectedChannel)
         if (!channel?.connected) {
-          toast({ 
-            title: "Canal desconectado", 
-            description: "Contato criado, mas o canal WhatsApp está desconectado",
-            variant: "destructive" 
-          })
+          elegantToast.warning("Canal desconectado", "Contato criado, mas o canal WhatsApp está desconectado")
         } else {
-          toast({ 
-            title: "Sucesso!", 
-            description: "Contato criado e mensagem enviada" 
-          })
+          elegantToast.success("Sucesso!", "Contato criado e mensagem enviada")
         }
       } else {
-        toast({ title: "Contato criado com sucesso!" })
+        elegantToast.created(contactData.name, "Contato")
       }
       
       onSave?.(contactData)
@@ -127,11 +122,7 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
       setOpen(false)
       
     } catch (error) {
-      toast({ 
-        title: "Erro ao criar contato", 
-        description: "Tente novamente",
-        variant: "destructive" 
-      })
+      elegantToast.networkError("criar contato")
     }
   }
 

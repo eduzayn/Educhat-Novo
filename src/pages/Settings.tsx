@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { useElegantToast } from "@/components/ui/elegant-toast"
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -70,7 +71,7 @@ export default function Settings() {
     color: "bg-primary",
     members: 0
   })
-  const { toast } = useToast()
+  const elegantToast = useElegantToast()
 
   const tabs = [
     { id: "profile", label: "Perfil", icon: User },
@@ -96,7 +97,7 @@ export default function Settings() {
   // Função para criar nova equipe
   const handleCreateTeam = () => {
     if (!newTeamData.name.trim()) {
-      toast({ title: "Nome da equipe é obrigatório", variant: "destructive" })
+      elegantToast.validationError("Nome da equipe é obrigatório")
       return
     }
 
@@ -108,7 +109,7 @@ export default function Settings() {
     }
 
     setTeamsList(prev => [...prev, newTeam])
-    toast({ title: "Equipe criada com sucesso!" })
+    elegantToast.created(newTeamData.name, "Equipe")
     setIsNewTeamModalOpen(false)
     setNewTeamData({ name: "", color: "bg-primary", members: 0 })
   }
@@ -122,7 +123,7 @@ export default function Settings() {
   // Função para salvar edição da equipe
   const handleSaveEditTeam = () => {
     if (!editingTeam.name.trim()) {
-      toast({ title: "Nome da equipe é obrigatório", variant: "destructive" })
+      elegantToast.validationError("Nome da equipe é obrigatório")
       return
     }
 
@@ -130,7 +131,7 @@ export default function Settings() {
       team.id === editingTeam.id ? editingTeam : team
     ))
     
-    toast({ title: "Equipe atualizada com sucesso!" })
+    elegantToast.updated(editingTeam.name, "Equipe")
     setIsEditTeamModalOpen(false)
     setEditingTeam(null)
   }
@@ -144,10 +145,7 @@ export default function Settings() {
   // Função para excluir equipe
   const confirmDeleteTeam = () => {
     setTeamsList(prev => prev.filter(team => team.id !== deletingTeam.id))
-    toast({ 
-      title: "Equipe excluída", 
-      description: `A equipe "${deletingTeam.name}" foi removida` 
-    })
+    elegantToast.deleted(deletingTeam.name, "Equipe")
     setIsDeleteTeamDialogOpen(false)
     setDeletingTeam(null)
   }
@@ -155,11 +153,7 @@ export default function Settings() {
   // Função para gerar QR Code Z-API
   const handleGenerateQrCode = async (channel: any) => {
     if (!channel.instanceId || !channel.instanceToken || !channel.clientToken) {
-      toast({ 
-        title: "Configuração incompleta", 
-        description: "Preencha todas as configurações da instância antes de gerar o QR Code",
-        variant: "destructive" 
-      })
+      elegantToast.validationError("Preencha todas as configurações da instância antes de gerar o QR Code")
       return
     }
 
@@ -184,7 +178,7 @@ export default function Settings() {
         const blob = await response.blob()
         const imageUrl = URL.createObjectURL(blob)
         setQrCodeImage(imageUrl)
-        toast({ title: "QR Code gerado com sucesso!" })
+        elegantToast.success("QR Code gerado com sucesso!")
       } else {
         throw new Error("Falha ao gerar QR Code")
       }
@@ -210,11 +204,7 @@ export default function Settings() {
       `)}`
       
       setQrCodeImage(mockQrCodeSvg)
-      toast({ 
-        title: "QR Code simulado", 
-        description: "Em produção, conecte com a Z-API real",
-        variant: "default" 
-      })
+      elegantToast.info("QR Code simulado", "Em produção, conecte com a Z-API real")
     } finally {
       setIsLoadingQrCode(false)
     }
@@ -223,37 +213,25 @@ export default function Settings() {
   // Função para testar conexão da instância
   const handleTestConnection = async (channel: any) => {
     if (!channel.instanceId || !channel.instanceToken || !channel.clientToken) {
-      toast({ 
-        title: "Configuração incompleta", 
-        description: "Preencha todas as configurações antes de testar",
-        variant: "destructive" 
-      })
+      elegantToast.validationError("Preencha todas as configurações antes de testar")
       return
     }
 
     try {
       // Simular teste de conexão com Z-API
-      toast({ title: "Testando conexão...", description: "Aguarde..." })
+      elegantToast.info("Testando conexão...", "Aguarde...")
       
       // Em produção, fazer requisição real para Z-API status endpoint
       setTimeout(() => {
         const isConnected = Math.random() > 0.3 // 70% chance de sucesso para demo
         if (isConnected) {
-          toast({ title: "Conexão estabelecida!", description: "WhatsApp conectado com sucesso" })
+          elegantToast.connected("WhatsApp")
         } else {
-          toast({ 
-            title: "Falha na conexão", 
-            description: "Verifique as credenciais e tente novamente",
-            variant: "destructive" 
-          })
+          elegantToast.error("Falha na conexão", "Verifique as credenciais e tente novamente")
         }
       }, 2000)
     } catch (error) {
-      toast({ 
-        title: "Erro ao testar conexão", 
-        description: "Tente novamente em alguns instantes",
-        variant: "destructive" 
-      })
+      elegantToast.networkError("testar a conexão")
     }
   }
 

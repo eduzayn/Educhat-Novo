@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { useElegantToast } from "@/components/ui/elegant-toast"
 import { 
   Search, 
   Plus, 
@@ -74,6 +75,7 @@ export default function Contacts() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const { toast } = useToast()
+  const elegantToast = useElegantToast()
 
   const filteredContacts = contactsList.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,10 +85,7 @@ export default function Contacts() {
 
   // Função para iniciar uma conversa
   const handleStartConversation = (contact: any) => {
-    toast({
-      title: "Conversa iniciada",
-      description: `Iniciando conversa com ${contact.name} via ${contact.channel}`
-    })
+    elegantToast.success("Conversa iniciada", `Conversa com ${contact.name} via ${contact.channel}`)
     // Aqui redirecionaria para a página de inbox com a conversa
     console.log("Iniciando conversa com:", contact)
   }
@@ -105,7 +104,7 @@ export default function Contacts() {
   // Função para salvar edição do contato
   const handleSaveEdit = () => {
     if (!editingContact.name.trim()) {
-      toast({ title: "Nome é obrigatório", variant: "destructive" })
+      elegantToast.validationError("Nome é obrigatório")
       return
     }
 
@@ -113,7 +112,7 @@ export default function Contacts() {
       contact.id === editingContact.id ? editingContact : contact
     ))
     
-    toast({ title: "Contato atualizado com sucesso!" })
+    elegantToast.updated(editingContact.name, "Contato")
     setIsEditModalOpen(false)
     setEditingContact(null)
   }
@@ -127,10 +126,7 @@ export default function Contacts() {
   // Função para excluir contato
   const confirmDeleteContact = () => {
     setContactsList(prev => prev.filter(contact => contact.id !== deletingContact.id))
-    toast({ 
-      title: "Contato excluído", 
-      description: `${deletingContact.name} foi removido dos seus contatos`
-    })
+    elegantToast.deleted(deletingContact.name, "Contato")
     setIsDeleteDialogOpen(false)
     setDeletingContact(null)
   }
@@ -145,25 +141,19 @@ export default function Contacts() {
       email: "" // Limpar email para evitar duplicata
     }
     setContactsList(prev => [...prev, newContact])
-    toast({ title: "Contato duplicado com sucesso!" })
+    elegantToast.duplicated(contact.name, "Contato")
   }
 
   // Função para arquivar contato
   const handleArchiveContact = (contact: any) => {
-    toast({ 
-      title: "Contato arquivado", 
-      description: `${contact.name} foi arquivado` 
-    })
+    elegantToast.info("Contato arquivado", `${contact.name} foi movido para o arquivo`)
     // Aqui implementaria a lógica de arquivamento
     console.log("Arquivando contato:", contact)
   }
 
   // Função para favoritar contato
   const handleFavoriteContact = (contact: any) => {
-    toast({ 
-      title: "Contato favoritado", 
-      description: `${contact.name} foi adicionado aos favoritos` 
-    })
+    elegantToast.success("Contato favoritado", `${contact.name} foi adicionado aos favoritos`)
     // Aqui implementaria a lógica de favoritos
     console.log("Favoritando contato:", contact)
   }
@@ -193,7 +183,7 @@ export default function Contacts() {
                   lastContact: "Agora"
                 }
                 setContactsList(prev => [...prev, newContact])
-                toast({ title: "Contato criado com sucesso!" })
+                elegantToast.created(contactData.name, "Contato")
               }}
             />
           </div>
@@ -210,7 +200,7 @@ export default function Contacts() {
               />
             </div>
             
-            <Button variant="outline" onClick={() => toast({ title: "Filtros em desenvolvimento" })}>
+            <Button variant="outline" onClick={() => elegantToast.info("Filtros em desenvolvimento", "Esta funcionalidade será adicionada em breve")}>
               <Filter className="h-4 w-4 mr-2" />
               Filtros
             </Button>
