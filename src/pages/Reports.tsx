@@ -6,6 +6,7 @@ import { ReportFilters } from "@/components/reporting/ReportFilters"
 import { AdvancedMetrics } from "@/components/reporting/AdvancedMetrics"
 import { TeamAnalysis } from "@/components/reporting/TeamAnalysis"
 import { PerformanceCharts } from "@/components/reporting/PerformanceCharts"
+import { TeamProductivity } from "@/components/reporting/TeamProductivity"
 import { useState } from "react"
 import { 
   BarChart3, 
@@ -106,7 +107,7 @@ export default function Reports() {
       {/* Conteúdo Principal */}
       <div className="p-6">
         <Tabs defaultValue="metricas" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="metricas" className="flex items-center">
               <Target className="h-4 w-4 mr-2" />
               Métricas
@@ -114,6 +115,10 @@ export default function Reports() {
             <TabsTrigger value="equipe" className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
               Equipe
+            </TabsTrigger>
+            <TabsTrigger value="produtividade" className="flex items-center">
+              <Clock className="h-4 w-4 mr-2" />
+              Produtividade
             </TabsTrigger>
             <TabsTrigger value="graficos" className="flex items-center">
               <BarChart3 className="h-4 w-4 mr-2" />
@@ -131,6 +136,10 @@ export default function Reports() {
 
           <TabsContent value="equipe" className="space-y-6">
             <TeamAnalysis />
+          </TabsContent>
+
+          <TabsContent value="produtividade" className="space-y-6">
+            <TeamProductivity />
           </TabsContent>
 
           <TabsContent value="graficos" className="space-y-6">
