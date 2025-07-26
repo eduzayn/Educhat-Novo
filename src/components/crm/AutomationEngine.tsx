@@ -491,97 +491,99 @@ export const AutomationEngine = () => {
       </Card>
 
       {/* Modal de Nova Automação */}
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {selectedTemplate ? `Configurar: ${selectedTemplate.name}` : 'Nova Automação'}
-          </DialogTitle>
-          <DialogDescription>
-            Configure os parâmetros da sua automação
-          </DialogDescription>
-        </DialogHeader>
+      <Dialog open={isNewWorkflowOpen} onOpenChange={setIsNewWorkflowOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedTemplate ? `Configurar: ${selectedTemplate.name}` : 'Nova Automação'}
+            </DialogTitle>
+            <DialogDescription>
+              Configure os parâmetros da sua automação
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Nome da Automação</Label>
+                <Input
+                  id="name"
+                  value={newWorkflow.name}
+                  onChange={(e) => setNewWorkflow(prev => ({...prev, name: e.target.value}))}
+                  placeholder="Ex: Qualificação WhatsApp"
+                />
+              </div>
+              <div>
+                <Label htmlFor="triggerType">Tipo de Gatilho</Label>
+                <Select value={newWorkflow.triggerType} onValueChange={(value) => setNewWorkflow(prev => ({...prev, triggerType: value}))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o gatilho" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="message_received">Nova mensagem recebida</SelectItem>
+                    <SelectItem value="stage_changed">Mudança de estágio</SelectItem>
+                    <SelectItem value="time_based">Baseado em tempo</SelectItem>
+                    <SelectItem value="opportunity_created">Oportunidade criada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="name">Nome da Automação</Label>
-              <Input
-                id="name"
-                value={newWorkflow.name}
-                onChange={(e) => setNewWorkflow(prev => ({...prev, name: e.target.value}))}
-                placeholder="Ex: Qualificação WhatsApp"
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={newWorkflow.description}
+                onChange={(e) => setNewWorkflow(prev => ({...prev, description: e.target.value}))}
+                placeholder="Descreva o que esta automação faz..."
+                rows={3}
               />
             </div>
+
             <div>
-              <Label htmlFor="triggerType">Tipo de Gatilho</Label>
-              <Select value={newWorkflow.triggerType} onValueChange={(value) => setNewWorkflow(prev => ({...prev, triggerType: value}))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o gatilho" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="message_received">Nova mensagem recebida</SelectItem>
-                  <SelectItem value="stage_changed">Mudança de estágio</SelectItem>
-                  <SelectItem value="time_based">Baseado em tempo</SelectItem>
-                  <SelectItem value="opportunity_created">Oportunidade criada</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="keywords">Palavras-chave (separadas por vírgula)</Label>
+              <Input
+                id="keywords"
+                value={newWorkflow.keywords}
+                onChange={(e) => setNewWorkflow(prev => ({...prev, keywords: e.target.value}))}
+                placeholder="orçamento, preço, valor, cotação"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="responseMessage">Mensagem de Resposta Automática</Label>
+              <Textarea
+                id="responseMessage"
+                value={newWorkflow.responseMessage}
+                onChange={(e) => setNewWorkflow(prev => ({...prev, responseMessage: e.target.value}))}
+                placeholder="Olá! Vi que você tem interesse em nossos serviços..."
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="followUpDelay">Delay para Próxima Ação (minutos)</Label>
+              <Input
+                id="followUpDelay"
+                type="number"
+                value={newWorkflow.followUpDelay}
+                onChange={(e) => setNewWorkflow(prev => ({...prev, followUpDelay: e.target.value}))}
+                placeholder="60"
+              />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={newWorkflow.description}
-              onChange={(e) => setNewWorkflow(prev => ({...prev, description: e.target.value}))}
-              placeholder="Descreva o que esta automação faz..."
-              rows={3}
-            />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsNewWorkflowOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateWorkflow}>
+              <Bot className="h-4 w-4 mr-2" />
+              Criar Automação
+            </Button>
           </div>
-
-          <div>
-            <Label htmlFor="keywords">Palavras-chave (separadas por vírgula)</Label>
-            <Input
-              id="keywords"
-              value={newWorkflow.keywords}
-              onChange={(e) => setNewWorkflow(prev => ({...prev, keywords: e.target.value}))}
-              placeholder="orçamento, preço, valor, cotação"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="responseMessage">Mensagem de Resposta Automática</Label>
-            <Textarea
-              id="responseMessage"
-              value={newWorkflow.responseMessage}
-              onChange={(e) => setNewWorkflow(prev => ({...prev, responseMessage: e.target.value}))}
-              placeholder="Olá! Vi que você tem interesse em nossos serviços..."
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="followUpDelay">Delay para Próxima Ação (minutos)</Label>
-            <Input
-              id="followUpDelay"
-              type="number"
-              value={newWorkflow.followUpDelay}
-              onChange={(e) => setNewWorkflow(prev => ({...prev, followUpDelay: e.target.value}))}
-              placeholder="60"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setIsNewWorkflowOpen(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleCreateWorkflow}>
-            <Bot className="h-4 w-4 mr-2" />
-            Criar Automação
-          </Button>
-        </div>
-      </DialogContent>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
