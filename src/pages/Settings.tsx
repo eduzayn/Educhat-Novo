@@ -29,11 +29,18 @@ const teams = [
   { id: 3, name: "Financeiro", members: 1, color: "bg-warning" }
 ]
 
-const channels = [
-  { name: "WhatsApp", active: true, webhook: "https://api.educhat.com/webhook/whatsapp" },
-  { name: "Instagram", active: true, webhook: "https://api.educhat.com/webhook/instagram" },
-  { name: "Facebook", active: false, webhook: "" },
-  { name: "E-mail", active: true, webhook: "smtp.educhat.com:587" }
+const whatsappChannels = [
+  { id: 1, name: "WhatsApp Vendas", active: true, instanceId: "", instanceToken: "", clientToken: "" },
+  { id: 2, name: "WhatsApp Suporte", active: true, instanceId: "", instanceToken: "", clientToken: "" },
+  { id: 3, name: "WhatsApp Financeiro", active: false, instanceId: "", instanceToken: "", clientToken: "" },
+  { id: 4, name: "WhatsApp Marketing", active: false, instanceId: "", instanceToken: "", clientToken: "" },
+  { id: 5, name: "WhatsApp Geral", active: false, instanceId: "", instanceToken: "", clientToken: "" }
+]
+
+const otherChannels = [
+  { name: "Instagram", active: true, webhook: "https://api.educhat.com/webhook/instagram", token: "" },
+  { name: "Facebook", active: false, webhook: "", token: "" },
+  { name: "E-mail", active: true, webhook: "smtp.educhat.com:587", token: "" }
 ]
 
 export default function Settings() {
@@ -194,12 +201,92 @@ export default function Settings() {
           {/* Canais */}
           {activeTab === "channels" && (
             <div className="space-y-6">
+              {/* WhatsApp Channels */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Configuração de Canais</CardTitle>
+                  <CardTitle>Canais WhatsApp (Z-API)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {channels.map((channel, index) => (
+                  {whatsappChannels.map((channel) => (
+                    <div key={channel.id}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <h3 className="font-medium text-foreground">{channel.name}</h3>
+                          <Badge variant={channel.active ? "default" : "secondary"}>
+                            {channel.active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </div>
+                        <Switch checked={channel.active} />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label>Nome do Canal</Label>
+                          <Input 
+                            defaultValue={channel.name}
+                            placeholder="Ex: WhatsApp Vendas"
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <Label>ID da Instância</Label>
+                            <Input 
+                              value={channel.instanceId}
+                              placeholder="Ex: 3E381D17B9F2D0172542C6B7A3ED70A7"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label>Token da Instância</Label>
+                            <Input 
+                              type="password"
+                              value={channel.instanceToken}
+                              placeholder="Token da instância Z-API"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label>Client Token</Label>
+                            <Input 
+                              type="password"
+                              value={channel.clientToken}
+                              placeholder="Client token Z-API"
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label>URL da API</Label>
+                          <Input 
+                            defaultValue={`https://api.z-api.io/instances/${channel.instanceId || '{INSTANCE_ID}'}/token/${channel.instanceToken || '{INSTANCE_TOKEN}'}/send-text`}
+                            placeholder="URL será gerada automaticamente"
+                            className="mt-1"
+                            disabled
+                          />
+                        </div>
+                      </div>
+                      
+                      <Separator className="mt-4" />
+                    </div>
+                  ))}
+                  
+                  <Button>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Configurações WhatsApp
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Other Channels */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Outros Canais</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {otherChannels.map((channel, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
@@ -224,6 +311,7 @@ export default function Settings() {
                           <Label>Token/Chave API</Label>
                           <Input 
                             type="password"
+                            value={channel.token}
                             placeholder="Token de acesso"
                             className="mt-1"
                           />
@@ -236,7 +324,7 @@ export default function Settings() {
                   
                   <Button>
                     <Save className="h-4 w-4 mr-2" />
-                    Salvar Configurações
+                    Salvar Outros Canais
                   </Button>
                 </CardContent>
               </Card>
