@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useElegantToast } from "@/components/ui/elegant-toast";
 import { CRMIntegration } from "@/components/crm/CRMIntegration";
 import { AutomationEngine } from "@/components/crm/AutomationEngine";
+import { MultipleFunnels } from "@/components/crm/MultipleFunnels";
 import { AdvancedAnalytics } from "@/components/crm/AdvancedAnalytics";
 import { 
   Users, 
@@ -478,7 +479,11 @@ const CRM = () => {
       {/* Conteúdo Principal com Tabs */}
       <div className="flex-1 p-6">
         <Tabs defaultValue="kanban" className="h-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="funnels" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Configurar Funis
+            </TabsTrigger>
             <TabsTrigger value="kanban" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Pipeline Kanban
@@ -497,7 +502,11 @@ const CRM = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="kanban" className="h-full">
+          <TabsContent value="funnels" className="h-full">
+            <MultipleFunnels />
+          </TabsContent>
+
+          <TabsContent value="kanban" className="h-full">{" "}
             <div className="h-full">
               {/* Filtros */}
               <div className="flex gap-4 mb-6">
