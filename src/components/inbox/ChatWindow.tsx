@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo } from "react"
 import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { AudioRecorder } from "@/components/inbox/AudioRecorder"
 import { Button } from "@/components/ui/button"
@@ -47,23 +47,66 @@ interface Message {
   id: number
   content: string
   timestamp: string
+  date: string // Nova propriedade para agrupamento por data
   isFromUser: boolean
   isFromBot?: boolean
   status?: "sent" | "delivered" | "read"
 }
 
-// Mock data para mensagens
+// Funções utilitárias para agrupamento de mensagens por data
+const formatDateSection = (dateString: string): string => {
+  const messageDate = new Date(dateString)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  
+  // Reset hours for comparison
+  const messageDateOnly = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate())
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate())
+  
+  if (messageDateOnly.getTime() === todayOnly.getTime()) {
+    return "Hoje"
+  } else if (messageDateOnly.getTime() === yesterdayOnly.getTime()) {
+    return "Ontem"
+  } else {
+    return messageDate.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+}
+
+const groupMessagesByDate = (messages: Message[]) => {
+  const grouped: { [key: string]: Message[] } = {}
+  
+  messages.forEach(message => {
+    const dateKey = message.date
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = []
+    }
+    grouped[dateKey].push(message)
+  })
+  
+  return grouped
+}
+
+// Mock data para mensagens com datas completas
 const messages: Message[] = [
   {
     id: 1,
     content: "Olá! Gostaria de saber mais sobre os produtos de vocês.",
     timestamp: "10:25",
+    date: "2024-01-26", // Hoje
     isFromUser: false
   },
   {
     id: 2,
     content: "Olá Maria! Claro, ficarei feliz em ajudar. Qual tipo de produto você tem interesse?",
     timestamp: "10:26",
+    date: "2024-01-26", // Hoje
     isFromUser: true,
     status: "read"
   },
@@ -71,21 +114,62 @@ const messages: Message[] = [
     id: 3,
     content: "Estou procurando algo para automação residencial. Vocês trabalham com isso?",
     timestamp: "10:28",
+    date: "2024-01-26", // Hoje
     isFromUser: false
   },
   {
     id: 4,
     content: "Sim! Temos uma linha completa de automação. Posso enviar nosso catálogo para você dar uma olhada?",
     timestamp: "10:29",
+    date: "2024-01-26", // Hoje
     isFromUser: true,
     status: "delivered"
   },
   {
     id: 5,
-    content: "Oi, gostaria de saber mais sobre os produtos...",
-    timestamp: "10:30",
+    content: "Perfeito! Vou aguardar o catálogo. Muito obrigada!",
+    timestamp: "16:45",
+    date: "2024-01-25", // Ontem
     isFromUser: false
   },
+  {
+    id: 6,
+    content: "De nada! Acabei de enviar por email. Qualquer dúvida, estou aqui.",
+    timestamp: "16:47",
+    date: "2024-01-25", // Ontem
+    isFromUser: true,
+    status: "read"
+  },
+  {
+    id: 7,
+    content: "Bom dia! Recebi o catálogo ontem. Estou interessada no kit básico.",
+    timestamp: "09:15",
+    date: "2024-01-24", // Anteontem
+    isFromUser: false
+  },
+  {
+    id: 8,
+    content: "Ótima escolha! O kit básico é perfeito para começar. Posso agendar uma demonstração?",
+    timestamp: "09:18",
+    date: "2024-01-24", // Anteontem
+    isFromUser: true,
+    status: "read"
+  },
+  {
+    id: 9,
+    content: "Sim, seria perfeito! Que tal na próxima semana?",
+    timestamp: "14:30",
+    date: "2024-01-22", // Alguns dias atrás
+    isFromUser: false
+  },
+  {
+    id: 10,
+    content: "Perfeito! Vou verificar minha agenda e te dou um retorno ainda hoje.",
+    timestamp: "14:32",
+    date: "2024-01-22", // Alguns dias atrás
+    isFromUser: true,
+    status: "delivered"
+  }
 ]
 
 const quickReplies = [
@@ -120,6 +204,17 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [transferUser, setTransferUser] = useState("")
   const [transferNote, setTransferNote] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Agrupar mensagens por data usando useMemo para performance
+  const groupedMessages = useMemo(() => {
+    const sorted = [...messages].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    return groupMessagesByDate(sorted)
+  }, [])
+
+  // Ordenar as datas para exibição cronológica
+  const sortedDateKeys = useMemo(() => {
+    return Object.keys(groupedMessages).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+  }, [groupedMessages])
 
   const handleSendMessage = () => {
     if (message.trim()) {
@@ -469,37 +564,51 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
         </CardHeader>
       </Card>
 
-      {/* Área de mensagens */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.isFromUser ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[70%] rounded-lg p-3 ${
-                msg.isFromUser
-                  ? "bg-chat-bubble-user text-chat-bubble-user-foreground"
-                  : "bg-chat-bubble-other text-chat-bubble-other-foreground border border-border"
-              }`}
-            >
-              <p className="text-sm">{msg.content}</p>
-              
-              <div className="flex items-center justify-end space-x-1 mt-2">
-                <span className={`text-xs ${
-                  msg.isFromUser ? "text-chat-bubble-user-foreground/70" : "text-muted-foreground"
-                }`}>
-                  {msg.timestamp}
-                </span>
-                
-                {msg.isFromUser && msg.status && (
-                  <div className="text-chat-bubble-user-foreground/70">
-                    {msg.status === "sent" && <Check className="h-3 w-3" />}
-                    {msg.status === "delivered" && <CheckCheck className="h-3 w-3" />}
-                    {msg.status === "read" && <CheckCheck className="h-3 w-3 text-primary-light" />}
-                  </div>
-                )}
+      {/* Área de mensagens com seções diárias */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {sortedDateKeys.map((dateKey) => (
+          <div key={dateKey} className="space-y-4">
+            {/* Cabeçalho da seção diária */}
+            <div className="flex items-center justify-center">
+              <div className="bg-muted/50 text-muted-foreground text-xs px-3 py-1 rounded-full border">
+                {formatDateSection(dateKey)}
               </div>
+            </div>
+            
+            {/* Mensagens do dia */}
+            <div className="space-y-4">
+              {groupedMessages[dateKey].map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.isFromUser ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[70%] rounded-lg p-3 ${
+                      msg.isFromUser
+                        ? "bg-chat-bubble-user text-chat-bubble-user-foreground"
+                        : "bg-chat-bubble-other text-chat-bubble-other-foreground border border-border"
+                    }`}
+                  >
+                    <p className="text-sm">{msg.content}</p>
+                    
+                    <div className="flex items-center justify-end space-x-1 mt-2">
+                      <span className={`text-xs ${
+                        msg.isFromUser ? "text-chat-bubble-user-foreground/70" : "text-muted-foreground"
+                      }`}>
+                        {msg.timestamp}
+                      </span>
+                      
+                      {msg.isFromUser && msg.status && (
+                        <div className="text-chat-bubble-user-foreground/70">
+                          {msg.status === "sent" && <Check className="h-3 w-3" />}
+                          {msg.status === "delivered" && <CheckCheck className="h-3 w-3" />}
+                          {msg.status === "read" && <CheckCheck className="h-3 w-3 text-primary-light" />}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
