@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 import { 
   User, 
   Phone, 
@@ -20,7 +23,9 @@ import {
   Mic,
   Clock,
   Building2,
-  MapPin
+  MapPin,
+  Plus,
+  Trash2
 } from "lucide-react"
 
 // Mock data do contato
@@ -68,10 +73,36 @@ export function ContactDetails() {
   const [editData, setEditData] = useState(contactData)
   const [newObservation, setNewObservation] = useState("")
   const [isRecording, setIsRecording] = useState(false)
+  
+  // Estados para gerenciamento de tags
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false)
+  const [newTag, setNewTag] = useState("")
+  const [selectedPredefinedTag, setSelectedPredefinedTag] = useState("")
+  const { toast } = useToast()
+
+  // Tags predefinidas
+  const predefinedTags = [
+    "Cliente VIP",
+    "Interessado em Compra",
+    "Reclamação",
+    "Suporte Técnico",
+    "Primeira Vez",
+    "Fidelizado",
+    "Empresarial",
+    "Residencial",
+    "Urgente",
+    "Seguimento",
+    "Orçamento",
+    "Pós-Venda"
+  ]
 
   const handleSave = () => {
     // Aqui salvaria os dados editados
     setIsEditing(false)
+    toast({
+      title: "Contato atualizado",
+      description: "As informações foram salvas com sucesso."
+    })
   }
 
   const handleCancel = () => {
@@ -83,6 +114,50 @@ export function ContactDetails() {
     if (newObservation.trim()) {
       // Aqui adicionaria a nova observação
       setNewObservation("")
+      toast({
+        title: "Observação adicionada",
+        description: "Nova observação foi registrada."
+      })
+    }
+  }
+
+  // Funções para gerenciar tags
+  const addTag = (tag: string) => {
+    if (tag.trim() && !editData.tags.includes(tag.trim())) {
+      setEditData(prev => ({
+        ...prev,
+        tags: [...prev.tags, tag.trim()]
+      }))
+      toast({
+        title: "Tag adicionada",
+        description: `Tag "${tag}" foi adicionada ao contato.`
+      })
+    }
+    setNewTag("")
+    setSelectedPredefinedTag("")
+    setIsTagModalOpen(false)
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setEditData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }))
+    toast({
+      title: "Tag removida",
+      description: `Tag "${tagToRemove}" foi removida.`
+    })
+  }
+
+  const handleAddPredefinedTag = () => {
+    if (selectedPredefinedTag) {
+      addTag(selectedPredefinedTag)
+    }
+  }
+
+  const handleAddCustomTag = () => {
+    if (newTag.trim()) {
+      addTag(newTag)
     }
   }
 
@@ -211,22 +286,99 @@ export function ContactDetails() {
         {/* Tags */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center">
-              <Tag className="h-4 w-4 mr-2" />
-              Tags
+            <CardTitle className="text-sm flex items-center justify-between">
+              <div className="flex items-center">
+                <Tag className="h-4 w-4 mr-2" />
+                Tags
+              </div>
+              <Dialog open={isTagModalOpen} onOpenChange={setIsTagModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-6 text-xs">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Adicionar
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Gerenciar Tags</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {/* Tags Predefinidas */}
+                    <div>
+                      <Label className="text-sm font-medium">Tags Predefinidas</Label>
+                      <Select value={selectedPredefinedTag} onValueChange={setSelectedPredefinedTag}>
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Selecione uma tag" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {predefinedTags
+                            .filter(tag => !editData.tags.includes(tag))
+                            .map((tag) => (
+                              <SelectItem key={tag} value={tag}>
+                                {tag}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        onClick={handleAddPredefinedTag}
+                        disabled={!selectedPredefinedTag}
+                        className="w-full mt-2"
+                        size="sm"
+                      >
+                        Adicionar Tag Selecionada
+                      </Button>
+                    </div>
+
+                    <Separator />
+
+                    {/* Tag Personalizada */}
+                    <div>
+                      <Label className="text-sm font-medium">Tag Personalizada</Label>
+                      <div className="flex space-x-2 mt-2">
+                        <Input
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value)}
+                          placeholder="Digite uma nova tag..."
+                          onKeyPress={(e) => e.key === 'Enter' && handleAddCustomTag()}
+                        />
+                        <Button 
+                          onClick={handleAddCustomTag}
+                          disabled={!newTag.trim()}
+                          size="sm"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {editData.tags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-              {isEditing && (
-                <Button variant="outline" size="sm" className="h-6 text-xs">
-                  + Adicionar
-                </Button>
+              {editData.tags.length > 0 ? (
+                editData.tags.map((tag, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="outline" 
+                    className="text-xs flex items-center gap-1 pr-1"
+                  >
+                    {tag}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => removeTag(tag)}
+                      title="Remover tag"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">Nenhuma tag adicionada</p>
               )}
             </div>
           </CardContent>
