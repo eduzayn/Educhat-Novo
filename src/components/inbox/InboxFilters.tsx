@@ -1,8 +1,15 @@
+import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import type { DateRange } from "react-day-picker"
 import { 
   Search, 
   MessageSquare, 
@@ -16,7 +23,9 @@ import {
   Eye,
   EyeOff,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  CalendarIcon,
+  X
 } from "lucide-react"
 
 const channels = [
@@ -61,8 +70,77 @@ const statuses = [
 ]
 
 export function InboxFilters() {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
+
+  const clearDateRange = () => {
+    setDateRange(undefined)
+  }
+
+  const formatDateRange = () => {
+    if (!dateRange?.from) return "Selecionar período"
+    if (!dateRange.to) return format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+    return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`
+  }
+
   return (
     <div className="w-80 bg-card border-r border-border p-4 space-y-4 h-full overflow-y-auto">
+      {/* Filtro de Período - Hub Central */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center justify-between">
+            <div className="flex items-center">
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              Período de Filtro
+            </div>
+            {(dateRange?.from || dateRange?.to) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={clearDateRange}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !dateRange?.from && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formatDateRange()}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                locale={ptBR}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          {(dateRange?.from || dateRange?.to) && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Este período será aplicado a todos os filtros abaixo
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Separator />
+
       {/* Busca */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
