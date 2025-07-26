@@ -570,7 +570,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
           <div key={dateKey} className="space-y-4">
             {/* Cabeçalho da seção diária */}
             <div className="flex items-center justify-center">
-              <div className="bg-muted/50 text-muted-foreground text-xs px-3 py-1 rounded-full border">
+              <div className="bg-muted/50 text-foreground text-xs px-3 py-1 rounded-full border">
                 {formatDateSection(dateKey)}
               </div>
             </div>
