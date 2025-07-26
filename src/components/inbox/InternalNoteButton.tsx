@@ -8,10 +8,11 @@ import { toast } from "@/hooks/use-toast"
 interface InternalNoteButtonProps {
   contactId: number
   onNoteAdded?: () => void
+  onNoteAddedToConversation?: (note: { content: string, authorName: string, authorId?: string }) => void
   className?: string
 }
 
-export function InternalNoteButton({ contactId, onNoteAdded, className }: InternalNoteButtonProps) {
+export function InternalNoteButton({ contactId, onNoteAdded, onNoteAddedToConversation, className }: InternalNoteButtonProps) {
   const [showDialog, setShowDialog] = useState(false)
   const [noteContent, setNoteContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -44,11 +45,20 @@ export function InternalNoteButton({ contactId, onNoteAdded, className }: Intern
       // if (response.ok) {
         setNoteContent('')
         setShowDialog(false)
-        onNoteAdded?.() // Callback para recarregar notas
+        
+        // Callback para recarregar notas no painel lateral
+        onNoteAdded?.()
+        
+        // Callback para adicionar nota como mensagem na conversa
+        onNoteAddedToConversation?.({
+          content: noteContent.trim(),
+          authorName: user?.displayName || 'Atendente',
+          authorId: user?.id
+        })
         
         toast({
-          title: "Nota adicionada",
-          description: "A nota interna foi salva com sucesso."
+          title: "Nota interna adicionada",
+          description: "A nota foi salva e aparece na conversa."
         })
       // } else {
       //   throw new Error('Erro ao salvar nota')

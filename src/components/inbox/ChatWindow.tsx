@@ -43,7 +43,8 @@ import {
   Download,
   Mail,
   Users,
-  User
+  User,
+  StickyNote
 } from "lucide-react"
 
 interface Message {
@@ -54,9 +55,12 @@ interface Message {
   isFromUser: boolean
   isFromBot?: boolean
   status?: "sent" | "delivered" | "read"
-  type?: "text" | "audio" // Novo campo para tipo de mensagem
+  type?: "text" | "audio" | "internal_note" // Adicionar tipo de nota interna
   audioUrl?: string // URL do áudio para mensagens de áudio
   audioDuration?: number // Duração do áudio em segundos
+  isInternalNote?: boolean // Flag para identificar notas internas
+  authorName?: string // Nome do autor da nota interna
+  authorId?: string // ID do autor da nota interna
 }
 
 // Funções utilitárias para agrupamento de mensagens por data
@@ -139,13 +143,24 @@ const messages: Message[] = [
   },
   {
     id: 5,
+    content: "Cliente interessado em automação residencial. Já enviamos o catálogo por email.",
+    timestamp: "10:30",
+    date: "2024-01-26", // Hoje
+    isFromUser: false,
+    type: "internal_note",
+    isInternalNote: true,
+    authorName: "João Silva",
+    authorId: "1"
+  },
+  {
+    id: 6,
     content: "Perfeito! Vou aguardar o catálogo. Muito obrigada!",
     timestamp: "16:45",
     date: "2024-01-25", // Ontem
     isFromUser: false
   },
   {
-    id: 6,
+    id: 7,
     content: "De nada! Acabei de enviar por email. Qualquer dúvida, estou aqui.",
     timestamp: "16:47",
     date: "2024-01-25", // Ontem
@@ -153,14 +168,25 @@ const messages: Message[] = [
     status: "read"
   },
   {
-    id: 7,
+    id: 8,
+    content: "Demonstração agendada para próxima semana. Cliente demonstrou muito interesse no kit básico.",
+    timestamp: "16:50",
+    date: "2024-01-25", // Ontem
+    isFromUser: false,
+    type: "internal_note",
+    isInternalNote: true,
+    authorName: "Maria Santos",
+    authorId: "2"
+  },
+  {
+    id: 9,
     content: "Bom dia! Recebi o catálogo ontem. Estou interessada no kit básico.",
     timestamp: "09:15",
     date: "2024-01-24", // Anteontem
     isFromUser: false
   },
   {
-    id: 8,
+    id: 10,
     content: "Ótima escolha! O kit básico é perfeito para começar. Posso agendar uma demonstração?",
     timestamp: "09:18",
     date: "2024-01-24", // Anteontem
@@ -168,14 +194,14 @@ const messages: Message[] = [
     status: "read"
   },
   {
-    id: 9,
+    id: 11,
     content: "Sim, seria perfeito! Que tal na próxima semana?",
     timestamp: "14:30",
     date: "2024-01-22", // Alguns dias atrás
     isFromUser: false
   },
   {
-    id: 10,
+    id: 12,
     content: "Perfeito! Vou verificar minha agenda e te dou um retorno ainda hoje.",
     timestamp: "14:32",
     date: "2024-01-22", // Alguns dias atrás
@@ -206,6 +232,7 @@ interface ChatWindowProps {
 
 export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [message, setMessage] = useState("")
+  const [internalMessages, setInternalMessages] = useState<Message[]>(messages)
   const [isRecording, setIsRecording] = useState(false)
   const [showAudioRecorder, setShowAudioRecorder] = useState(false)
   const [isCallActive, setIsCallActive] = useState(false)
@@ -221,9 +248,9 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
 
   // Agrupar mensagens por data usando useMemo para performance
   const groupedMessages = useMemo(() => {
-    const sorted = [...messages].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    const sorted = [...internalMessages].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     return groupMessagesByDate(sorted)
-  }, [])
+  }, [internalMessages])
 
   // Ordenar as datas para exibição cronológica
   const sortedDateKeys = useMemo(() => {
@@ -290,6 +317,27 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const handleQuickReplySelect = (reply: { content: string }) => {
     setMessage(reply.content)
     setIsQuickRepliesModalOpen(false)
+  }
+
+  // Função para adicionar nota interna como mensagem na conversa
+  const handleAddInternalNoteToConversation = (noteData: { content: string, authorName: string, authorId?: string }) => {
+    const now = new Date()
+    const timestamp = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    const date = now.toISOString().split('T')[0]
+
+    const newInternalNote: Message = {
+      id: Math.max(...internalMessages.map(m => m.id)) + 1,
+      content: noteData.content,
+      timestamp: timestamp,
+      date: date,
+      isFromUser: false,
+      type: "internal_note",
+      isInternalNote: true,
+      authorName: noteData.authorName,
+      authorId: noteData.authorId
+    }
+
+    setInternalMessages(prev => [...prev, newInternalNote])
   }
 
   const handleStartCall = () => {
@@ -513,6 +561,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
               <InternalNoteButton 
                 contactId={conversationId} 
                 className="h-8 w-8"
+                onNoteAddedToConversation={handleAddInternalNoteToConversation}
               />
               
               {/* Call Button */}
@@ -697,49 +746,78 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
             {/* Mensagens do dia */}
             <div className="space-y-4">
               {groupedMessages[dateKey].map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.isFromUser ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
-                      msg.isFromUser
-                        ? "bg-chat-bubble-user text-chat-bubble-user-foreground"
-                        : "bg-chat-bubble-other text-chat-bubble-other-foreground border border-border"
-                    }`}
-                  >
-                    {/* Renderizar AudioPlayer ou texto baseado no tipo da mensagem */}
-                    {msg.type === "audio" && msg.audioUrl ? (
-                      <div className="space-y-2">
-                        <AudioPlayer 
-                          audioUrl={msg.audioUrl}
-                          isOwnMessage={msg.isFromUser}
-                          duration={msg.audioDuration}
-                        />
-                        {msg.content && (
-                          <p className="text-sm mt-2">{msg.content}</p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm">{msg.content}</p>
-                    )}
-                    
-                    <div className="flex items-center justify-end space-x-1 mt-2">
-                      <span className={`text-xs ${
-                        msg.isFromUser ? "text-chat-bubble-user-foreground/70" : "text-muted-foreground"
-                      }`}>
-                        {msg.timestamp}
-                      </span>
-                      
-                      {msg.isFromUser && msg.status && (
-                        <div className="text-chat-bubble-user-foreground/70">
-                          {msg.status === "sent" && <Check className="h-3 w-3" />}
-                          {msg.status === "delivered" && <CheckCheck className="h-3 w-3" />}
-                          {msg.status === "read" && <CheckCheck className="h-3 w-3 text-primary-light" />}
+                <div key={msg.id}>
+                  {/* Nota interna - Design especial */}
+                  {msg.isInternalNote ? (
+                    <div className="flex justify-center">
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-w-[80%] shadow-sm">
+                        <div className="flex items-start space-x-2">
+                          <StickyNote className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs font-medium text-yellow-800">
+                                Nota Interna
+                              </span>
+                              <span className="text-xs text-yellow-600">
+                                {msg.authorName}
+                              </span>
+                            </div>
+                            <p className="text-sm text-yellow-800 bg-yellow-100/50 rounded px-2 py-1">
+                              {msg.content}
+                            </p>
+                            <div className="flex justify-end mt-1">
+                              <span className="text-xs text-yellow-600">
+                                {msg.timestamp}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* Mensagens normais */
+                    <div className={`flex ${msg.isFromUser ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className={`max-w-[70%] rounded-lg p-3 ${
+                          msg.isFromUser
+                            ? "bg-chat-bubble-user text-chat-bubble-user-foreground"
+                            : "bg-chat-bubble-other text-chat-bubble-other-foreground border border-border"
+                        }`}
+                      >
+                        {/* Renderizar AudioPlayer ou texto baseado no tipo da mensagem */}
+                        {msg.type === "audio" && msg.audioUrl ? (
+                          <div className="space-y-2">
+                            <AudioPlayer 
+                              audioUrl={msg.audioUrl}
+                              isOwnMessage={msg.isFromUser}
+                              duration={msg.audioDuration}
+                            />
+                            {msg.content && (
+                              <p className="text-sm mt-2">{msg.content}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm">{msg.content}</p>
+                        )}
+                        
+                        <div className="flex items-center justify-end space-x-1 mt-2">
+                          <span className={`text-xs ${
+                            msg.isFromUser ? "text-chat-bubble-user-foreground/70" : "text-muted-foreground"
+                          }`}>
+                            {msg.timestamp}
+                          </span>
+                          
+                          {msg.isFromUser && msg.status && (
+                            <div className="text-chat-bubble-user-foreground/70">
+                              {msg.status === "sent" && <Check className="h-3 w-3" />}
+                              {msg.status === "delivered" && <CheckCheck className="h-3 w-3" />}
+                              {msg.status === "read" && <CheckCheck className="h-3 w-3 text-primary-light" />}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
