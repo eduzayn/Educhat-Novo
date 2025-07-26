@@ -3,6 +3,7 @@ import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { AudioRecorder } from "@/components/inbox/AudioRecorder"
 import { AudioPlayer } from "@/components/inbox/AudioPlayer"
 import { AttachmentModal } from "@/components/inbox/AttachmentModal"
+import { InternalNoteButton } from "@/components/inbox/InternalNoteButton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -508,6 +509,12 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
             </div>
 
             <div className="flex items-center space-x-2">
+              {/* Internal Note Button */}
+              <InternalNoteButton 
+                contactId={conversationId} 
+                className="h-8 w-8"
+              />
+              
               {/* Call Button */}
               {!isCallActive ? (
                 <Button variant="outline" size="sm" onClick={handleStartCall}>

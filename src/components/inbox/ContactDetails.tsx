@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { ContactNotesDisplay } from "@/components/inbox/ContactNotesDisplay"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -436,6 +437,13 @@ export function ContactDetails() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Notas Internas */}
+        <Card>
+          <CardContent className="p-4">
+            <ContactNotesDisplay contactId={contactData.id} />
           </CardContent>
         </Card>
 
