@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/hooks/use-toast"
+import { useNavigate, Link } from "react-router-dom"
 import { 
   MessageSquare, 
   Eye, 
@@ -20,18 +22,69 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
+  const navigate = useNavigate()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     
-    // Aqui será integrado com JWT/backend no futuro
-    setTimeout(() => {
-      console.log("Login attempt:", { email, password, rememberMe })
+    // Validações básicas
+    if (!email || !password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha email e senha.",
+        variant: "destructive"
+      })
       setIsLoading(false)
-      // Redirect to dashboard after successful login
-      window.location.href = "/"
-    }, 1500)
+      return
+    }
+
+    try {
+      // Simular processo de login
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Mock de validação (substituir por integração real)
+      const validUsers = [
+        { email: "admin@educhat.com", password: "123456", name: "João Silva", role: "admin", team: "Administração" },
+        { email: "vendas@educhat.com", password: "123456", name: "Ana Costa", role: "vendas", team: "Vendas" },
+        { email: "suporte@educhat.com", password: "123456", name: "Pedro Santos", role: "suporte", team: "Suporte" }
+      ]
+      
+      const user = validUsers.find(u => u.email === email && u.password === password)
+      
+      if (user) {
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo(a), ${user.name}.`
+        })
+        
+        // Armazenar dados do usuário (mock)
+        localStorage.setItem('user', JSON.stringify({
+          id: Date.now(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          team: user.team
+        }))
+        
+        navigate("/")
+      } else {
+        toast({
+          title: "Credenciais inválidas",
+          description: "Email ou senha incorretos.",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Erro no login",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -188,10 +241,23 @@ export default function Login() {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Não tem uma conta?{" "}
-                <Button variant="link" className="text-primary p-0 h-auto">
+                <Link to="/cadastro" className="text-primary hover:underline">
                   Solicitar acesso
-                </Button>
+                </Link>
               </p>
+            </div>
+            
+            {/* Demo credentials */}
+            <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
+              <div className="flex items-start space-x-2">
+                <Shield className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <div className="text-sm text-muted-foreground">
+                  <p className="font-medium">Credenciais de teste:</p>
+                  <p>• admin@educhat.com / 123456</p>
+                  <p>• vendas@educhat.com / 123456</p>
+                  <p>• suporte@educhat.com / 123456</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

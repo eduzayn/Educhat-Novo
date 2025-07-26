@@ -30,7 +30,16 @@ import {
   QrCode,
   Wifi,
   WifiOff,
-  Loader2
+  Loader2,
+  UserPlus,
+  Eye,
+  Search,
+  Filter,
+  Mail,
+  Phone,
+  Building,
+  Crown,
+  Ban
 } from "lucide-react"
 
 const teams = [
@@ -72,10 +81,27 @@ export default function Settings() {
     color: "bg-primary",
     members: 0
   })
+  
+  // Estados para gerenciamento de usuários
+  const [users, setUsers] = useState(() => {
+    const savedUsers = localStorage.getItem('users')
+    return savedUsers ? JSON.parse(savedUsers) : [
+      { id: 1, name: "João Silva", email: "admin@educhat.com", role: "admin", team: "administracao", active: true, phone: "(11) 99999-9999", department: "Administração" },
+      { id: 2, name: "Ana Costa", email: "vendas@educhat.com", role: "vendas", team: "vendas", active: true, phone: "(11) 98888-8888", department: "Vendas" },
+      { id: 3, name: "Pedro Santos", email: "suporte@educhat.com", role: "suporte", team: "suporte", active: true, phone: "(11) 97777-7777", department: "Suporte" }
+    ]
+  })
+  const [searchUsers, setSearchUsers] = useState("")
+  const [filterTeam, setFilterTeam] = useState("all")
+  const [filterRole, setFilterRole] = useState("all")
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
+  const [deletingUser, setDeletingUser] = useState<any>(null)
+  
   const elegantToast = useElegantToast()
 
   const tabs = [
     { id: "profile", label: "Perfil", icon: User },
+    { id: "users", label: "Usuários", icon: Users },
     { id: "teams", label: "Equipes", icon: Users },
     { id: "channels", label: "Canais", icon: MessageSquare },
     { id: "notifications", label: "Notificações", icon: Bell },
@@ -236,6 +262,60 @@ export default function Settings() {
     }
   }
 
+  // Funções para gerenciamento de usuários
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchUsers.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchUsers.toLowerCase())
+    const matchesTeam = filterTeam === "all" || user.team === filterTeam
+    const matchesRole = filterRole === "all" || user.role === filterRole
+    return matchesSearch && matchesTeam && matchesRole
+  })
+
+  const handleToggleUserStatus = (userId: number) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, active: !user.active } : user
+    ))
+    const user = users.find(u => u.id === userId)
+    elegantToast.info(`${user?.name} foi ${user?.active ? 'desativado' : 'ativado'}`)
+  }
+
+  const handleDeleteUser = (user: any) => {
+    setDeletingUser(user)
+    setIsDeleteUserDialogOpen(true)
+  }
+
+  const confirmDeleteUser = () => {
+    setUsers(prev => prev.filter(user => user.id !== deletingUser.id))
+    elegantToast.deleted(deletingUser.name, "Usuário")
+    setIsDeleteUserDialogOpen(false)
+    setDeletingUser(null)
+  }
+
+  const getRoleLabel = (role: string) => {
+    const roles = {
+      admin: "Administrador",
+      supervisor: "Supervisor", 
+      atendente: "Atendente",
+      analista: "Analista",
+      consultor: "Consultor",
+      vendas: "Vendas",
+      suporte: "Suporte"
+    }
+    return roles[role as keyof typeof roles] || role
+  }
+
+  const getTeamLabel = (team: string) => {
+    const teams = {
+      administracao: "Administração",
+      vendas: "Vendas",
+      suporte: "Suporte",
+      "pos-vendas": "Pós-Vendas",
+      financeiro: "Financeiro",
+      marketing: "Marketing"
+    }
+    return teams[team as keyof typeof teams] || team
+  }
+
   return (
     <div className="h-screen bg-background overflow-y-auto">
       {/* Header */}
@@ -334,6 +414,224 @@ export default function Settings() {
               </CardContent>
             </Card>
           )}
+
+          {/* Usuários */}
+          {activeTab === "users" && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Users className="h-5 w-5 mr-2" />
+                      Gerenciar Usuários
+                    </div>
+                    <Button asChild>
+                      <a href="/cadastro">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Novo Usuário
+                      </a>
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* Filtros e busca */}
+                  <div className="mb-6 space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Buscar usuários por nome ou email..."
+                            value={searchUsers}
+                            onChange={(e) => setSearchUsers(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Select value={filterTeam} onValueChange={setFilterTeam}>
+                          <SelectTrigger className="w-[150px]">
+                            <Filter className="h-4 w-4 mr-2" />
+                            <SelectValue placeholder="Equipe" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todas as equipes</SelectItem>
+                            <SelectItem value="vendas">Vendas</SelectItem>
+                            <SelectItem value="suporte">Suporte</SelectItem>
+                            <SelectItem value="administracao">Administração</SelectItem>
+                            <SelectItem value="financeiro">Financeiro</SelectItem>
+                            <SelectItem value="marketing">Marketing</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        <Select value={filterRole} onValueChange={setFilterRole}>
+                          <SelectTrigger className="w-[150px]">
+                            <SelectValue placeholder="Cargo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os cargos</SelectItem>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                            <SelectItem value="supervisor">Supervisor</SelectItem>
+                            <SelectItem value="atendente">Atendente</SelectItem>
+                            <SelectItem value="vendas">Vendas</SelectItem>
+                            <SelectItem value="suporte">Suporte</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lista de usuários */}
+                  <div className="space-y-3">
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((user) => (
+                        <Card key={user.id} className="border border-border">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <Avatar className="h-12 w-12">
+                                  <AvatarFallback className="bg-primary text-primary-foreground">
+                                    {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3 mb-1">
+                                    <h3 className="font-medium text-foreground">{user.name}</h3>
+                                    {user.role === 'admin' && (
+                                      <Badge variant="default" className="bg-orange-500">
+                                        <Crown className="h-3 w-3 mr-1" />
+                                        Admin
+                                      </Badge>
+                                    )}
+                                    <Badge variant={user.active ? "default" : "secondary"}>
+                                      {user.active ? "Ativo" : "Inativo"}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                    <div className="flex items-center">
+                                      <Mail className="h-4 w-4 mr-1" />
+                                      {user.email}
+                                    </div>
+                                    {user.phone && (
+                                      <div className="flex items-center">
+                                        <Phone className="h-4 w-4 mr-1" />
+                                        {user.phone}
+                                      </div>
+                                    )}
+                                    {user.department && (
+                                      <div className="flex items-center">
+                                        <Building className="h-4 w-4 mr-1" />
+                                        {user.department}
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="flex items-center space-x-4 mt-2 text-sm">
+                                    <span className="font-medium">Cargo:</span>
+                                    <span>{getRoleLabel(user.role)}</span>
+                                    <span className="font-medium">Equipe:</span>
+                                    <span>{getTeamLabel(user.team)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleToggleUserStatus(user.id)}
+                                  title={user.active ? "Desativar usuário" : "Ativar usuário"}
+                                >
+                                  {user.active ? (
+                                    <Ban className="h-4 w-4 text-orange-500" />
+                                  ) : (
+                                    <Eye className="h-4 w-4 text-green-500" />
+                                  )}
+                                </Button>
+                                
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  title="Editar usuário"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                
+                                {user.role !== 'admin' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive"
+                                    onClick={() => handleDeleteUser(user)}
+                                    title="Excluir usuário"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-foreground mb-2">
+                          Nenhum usuário encontrado
+                        </h3>
+                        <p className="text-muted-foreground mb-4">
+                          {searchUsers || filterTeam !== "all" || filterRole !== "all" 
+                            ? "Tente alterar os filtros de busca" 
+                            : "Cadastre o primeiro usuário do sistema"
+                          }
+                        </p>
+                        {(!searchUsers && filterTeam === "all" && filterRole === "all") && (
+                          <Button asChild>
+                            <a href="/cadastro">
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Cadastrar Primeiro Usuário
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Estatísticas */}
+                  {filteredUsers.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-border">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                        <div>
+                          <p className="text-2xl font-bold text-foreground">{users.length}</p>
+                          <p className="text-sm text-muted-foreground">Total de usuários</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-green-600">
+                            {users.filter(u => u.active).length}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Usuários ativos</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-orange-500">
+                            {users.filter(u => u.role === 'admin').length}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Administradores</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-blue-600">
+                            {new Set(users.map(u => u.team)).size}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Equipes diferentes</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
           {/* Equipes */}
           {activeTab === "teams" && (
