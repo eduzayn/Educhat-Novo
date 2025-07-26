@@ -74,6 +74,13 @@ const CRM = () => {
   ]);
 
   const [activeDepartment, setActiveDepartment] = useState('sales');
+  const [availableFunnels, setAvailableFunnels] = useState([
+    { id: 'sales_funnel', name: 'Vendas - Padrão', departmentId: 'sales' },
+    { id: 'support_funnel', name: 'Suporte - Padrão', departmentId: 'support' },
+    { id: 'administrative_funnel', name: 'Secretaria - Padrão', departmentId: 'administrative' },
+    { id: 'financial_funnel', name: 'Financeiro - Padrão', departmentId: 'financial' }
+  ]);
+  const [selectedFunnelId, setSelectedFunnelId] = useState('sales_funnel');
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([
     {
@@ -139,12 +146,43 @@ const CRM = () => {
 
   const handleFunnelChange = (departmentId: string, funnelId: string, funnelStages: any[]) => {
     setActiveDepartment(departmentId);
+    setSelectedFunnelId(funnelId);
     setStages(funnelStages.map(stage => ({
       id: stage.id,
       name: stage.name,
       color: stage.color,
       count: getOpportunitiesByStage(stage.id).length
     })));
+    
+    // Atualizar lista de funis disponíveis
+    setAvailableFunnels(prev => {
+      const exists = prev.some(f => f.id === funnelId);
+      if (!exists) {
+        const department = getDepartmentName(departmentId);
+        return [...prev, { id: funnelId, name: `${department} - Customizado`, departmentId }];
+      }
+      return prev;
+    });
+  };
+
+  const getDepartmentName = (departmentId: string) => {
+    const names: {[key: string]: string} = {
+      'sales': 'Vendas',
+      'support': 'Suporte', 
+      'administrative': 'Secretaria',
+      'financial': 'Financeiro'
+    };
+    return names[departmentId] || departmentId;
+  };
+
+  const handleFunnelSelect = (funnelId: string) => {
+    setSelectedFunnelId(funnelId);
+    const funnel = availableFunnels.find(f => f.id === funnelId);
+    if (funnel) {
+      setActiveDepartment(funnel.departmentId);
+      // Aqui você pode carregar os estágios do funil selecionado
+      // Por enquanto, vamos manter os estágios padrão
+    }
   };
 
   const handleDragEnd = useCallback((result: DropResult) => {
@@ -530,6 +568,22 @@ const CRM = () => {
                     className="max-w-sm"
                   />
                 </div>
+                
+                {/* Seletor de Funil */}
+                <Select value={selectedFunnelId} onValueChange={handleFunnelSelect}>
+                  <SelectTrigger className="w-64">
+                    <Target className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Selecione o funil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableFunnels.map(funnel => (
+                      <SelectItem key={funnel.id} value={funnel.id}>
+                        {funnel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
                 <Select value={selectedStage} onValueChange={setSelectedStage}>
                   <SelectTrigger className="w-48">
                     <Filter className="h-4 w-4 mr-2" />
