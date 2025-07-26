@@ -121,12 +121,12 @@ export function EduChatSidebar({ collapsed, onToggle }: SidebarProps) {
               <>
                 <span className="flex-1">{item.title}</span>
                 {item.badge && (
-                  <Badge 
-                    variant="secondary" 
-                    className="ml-auto bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5"
-                  >
-                    {item.badge}
-                  </Badge>
+                <Badge 
+                  variant="secondary" 
+                  className="ml-auto bg-muted text-muted-foreground text-xs px-1.5 py-0.5"
+                >
+                  {item.badge}
+                </Badge>
                 )}
               </>
             )}
