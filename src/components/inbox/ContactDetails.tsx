@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -21,7 +20,6 @@ import {
   Edit,
   Save,
   X,
-  Mic,
   Clock,
   Building2,
   MapPin,
@@ -38,7 +36,6 @@ const contactData = {
   channel: "WhatsApp",
   avatar: null,
   tags: ["Cliente VIP", "Interessada em Automação"],
-  observations: "Cliente muito interessada em produtos de automação residencial. Já comprou conosco anteriormente.",
   company: "Silva & Associados",
   address: "São Paulo, SP",
   createdAt: "15/01/2024",
@@ -72,8 +69,6 @@ const conversationHistory = [
 export function ContactDetails({ onNoteAddedToConversation }: { onNoteAddedToConversation?: (note: { content: string, authorName: string, authorId?: string }) => void }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState(contactData)
-  const [newObservation, setNewObservation] = useState("")
-  const [isRecording, setIsRecording] = useState(false)
   
   // Estados para gerenciamento de tags
   const [isTagModalOpen, setIsTagModalOpen] = useState(false)
@@ -111,16 +106,6 @@ export function ContactDetails({ onNoteAddedToConversation }: { onNoteAddedToCon
     setIsEditing(false)
   }
 
-  const addObservation = () => {
-    if (newObservation.trim()) {
-      // Aqui adicionaria a nova observação
-      setNewObservation("")
-      toast({
-        title: "Observação adicionada",
-        description: "Nova observação foi registrada."
-      })
-    }
-  }
 
   // Funções para gerenciar tags
   const addTag = (tag: string) => {
@@ -381,61 +366,6 @@ export function ContactDetails({ onNoteAddedToConversation }: { onNoteAddedToCon
               ) : (
                 <p className="text-xs text-muted-foreground">Nenhuma tag adicionada</p>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Observações */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Observações</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {isEditing ? (
-              <Textarea
-                value={editData.observations}
-                onChange={(e) => setEditData({ ...editData, observations: e.target.value })}
-                placeholder="Adicione observações sobre o contato..."
-                rows={3}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {editData.observations}
-              </p>
-            )}
-
-            {/* Nova observação */}
-            <Separator />
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Nova Observação</Label>
-              <div className="flex space-x-2">
-                <Textarea
-                  value={newObservation}
-                  onChange={(e) => setNewObservation(e.target.value)}
-                  placeholder="Adicionar nova observação..."
-                  rows={2}
-                  className="flex-1"
-                />
-                <div className="flex flex-col space-y-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`p-2 ${isRecording ? "text-destructive" : ""}`}
-                    onClick={() => setIsRecording(!isRecording)}
-                    title="Gravar áudio"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={addObservation}
-                    size="sm"
-                    className="p-2"
-                    disabled={!newObservation.trim()}
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
