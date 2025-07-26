@@ -35,7 +35,8 @@ import {
   Trash2,
   Settings,
   FileText,
-  Download
+  Download,
+  Mail
 } from "lucide-react"
 
 interface Message {
@@ -191,6 +192,13 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     })
   }
 
+  const handleMarkAsUnread = () => {
+    toast({
+      title: "Conversa marcada como não lida",
+      description: "A conversa foi marcada como não lida."
+    })
+  }
+
   if (!conversationId) {
     return (
       <div className="flex-1 flex items-center justify-center bg-muted/10">
@@ -311,6 +319,10 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                   <DropdownMenuItem onClick={handleFlagConversation}>
                     <Flag className="h-4 w-4 mr-2" />
                     Sinalizar conversa
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleMarkAsUnread}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Marcar como não lido
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
