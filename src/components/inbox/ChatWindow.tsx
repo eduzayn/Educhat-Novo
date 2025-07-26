@@ -824,6 +824,15 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                 >
                   <Mic className="h-4 w-4" />
                 </Button>
+                
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!message.trim()}
+                  size="sm"
+                  className="p-1"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
               
               {/* Sugestão de IA com Base de Conhecimento */}
@@ -857,14 +866,6 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                 />
               </div>
             </div>
-            
-            <Button
-              onClick={handleSendMessage}
-              disabled={!message.trim()}
-              className="px-4"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       )}
