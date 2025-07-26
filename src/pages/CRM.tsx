@@ -1,231 +1,654 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import React, { useState, useCallback } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useElegantToast } from "@/components/ui/elegant-toast";
 import { 
-  Building2, 
-  TrendingUp, 
   Users, 
-  Target,
-  Plus,
-  MoreVertical,
-  Calendar,
-  DollarSign
-} from "lucide-react"
+  Plus, 
+  DollarSign, 
+  Target, 
+  TrendingUp, 
+  Calendar, 
+  Phone, 
+  Mail, 
+  MessageSquare,
+  MoreHorizontal,
+  Filter,
+  Eye,
+  Edit,
+  Trash2,
+  Copy,
+  Clock,
+  Building,
+  User,
+  Star,
+  Zap,
+  BarChart3
+} from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-const deals = [
-  {
-    id: 1,
-    title: "Automação Residencial - Silva",
-    company: "Silva & Associados",
-    value: 15000,
-    stage: "Proposta",
-    probability: 70,
-    closeDate: "2024-02-15",
-    contact: "Maria Silva"
-  },
-  {
-    id: 2,
-    title: "Sistema Completo - XYZ Corp",
-    company: "XYZ Corporation",
-    value: 25000,
-    stage: "Negociação",
-    probability: 50,
-    closeDate: "2024-02-28",
-    contact: "João Santos"
-  },
-  {
-    id: 3,
-    title: "Upgrade Sistema - ABC Ltd",
-    company: "ABC Limited",
-    value: 8000,
-    stage: "Qualificação",
-    probability: 30,
-    closeDate: "2024-03-10",
-    contact: "Ana Costa"
-  }
-]
+interface Opportunity {
+  id: string;
+  title: string;
+  company: string;
+  contact: string;
+  value: number;
+  probability: number;
+  stage: string;
+  dueDate: string;
+  description: string;
+  lastActivity: string;
+  source: string;
+  tags: string[];
+}
 
-const stages = [
-  { name: "Qualificação", count: 3, color: "bg-yellow-500" },
-  { name: "Proposta", count: 2, color: "bg-blue-500" },
-  { name: "Negociação", count: 1, color: "bg-orange-500" },
-  { name: "Fechamento", count: 1, color: "bg-green-500" }
-]
+interface Stage {
+  id: string;
+  name: string;
+  color: string;
+  count: number;
+}
 
-export default function CRM() {
-  const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0)
-  const avgDealValue = totalValue / deals.length
+const CRM = () => {
+  const { showToast } = useElegantToast();
+  
+  const [stages] = useState<Stage[]>([
+    { id: 'qualification', name: 'Qualificação', color: 'bg-yellow-500', count: 3 },
+    { id: 'proposal', name: 'Proposta', color: 'bg-blue-500', count: 2 },
+    { id: 'negotiation', name: 'Negociação', color: 'bg-orange-500', count: 1 },
+    { id: 'closing', name: 'Fechamento', color: 'bg-green-500', count: 1 }
+  ]);
+
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([
+    {
+      id: '1',
+      title: 'Automação Residencial - Silva',
+      company: 'Silva & Associados',
+      contact: 'Maria Silva',
+      value: 15000,
+      probability: 70,
+      stage: 'qualification',
+      dueDate: '2024-02-14',
+      description: 'Sistema completo de automação residencial para casa de alto padrão',
+      lastActivity: '2 horas atrás',
+      source: 'WhatsApp',
+      tags: ['Urgente', 'VIP']
+    },
+    {
+      id: '2',
+      title: 'Sistema Completo - XYZ Corp',
+      company: 'XYZ Corporation',
+      contact: 'João Santos',
+      value: 25000,
+      probability: 50,
+      stage: 'proposal',
+      dueDate: '2024-02-27',
+      description: 'Implementação de sistema empresarial completo',
+      lastActivity: '1 dia atrás',
+      source: 'E-mail',
+      tags: ['Corporativo']
+    },
+    {
+      id: '3',
+      title: 'Upgrade Sistema - ABC Ltd',
+      company: 'ABC Limited',
+      contact: 'Ana Costa',
+      value: 8000,
+      probability: 90,
+      stage: 'negotiation',
+      dueDate: '2024-02-10',
+      description: 'Atualização e melhorias no sistema existente',
+      lastActivity: '3 horas atrás',
+      source: 'Telefone',
+      tags: ['Cliente Existente']
+    }
+  ]);
+
+  const [isNewOpportunityOpen, setIsNewOpportunityOpen] = useState(false);
+  const [newOpportunity, setNewOpportunity] = useState({
+    title: '',
+    company: '',
+    contact: '',
+    value: '',
+    probability: '',
+    stage: 'qualification',
+    dueDate: '',
+    description: '',
+    source: '',
+    tags: ''
+  });
+
+  const [filter, setFilter] = useState('');
+  const [selectedStage, setSelectedStage] = useState('all');
+
+  const handleDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
+
+    const { source, destination, draggableId } = result;
+
+    if (source.droppableId === destination.droppableId) return;
+
+    setOpportunities(prev => 
+      prev.map(opp => 
+        opp.id === draggableId 
+          ? { ...opp, stage: destination.droppableId }
+          : opp
+      )
+    );
+
+    showToast({
+      variant: 'success',
+      title: 'Oportunidade Movida',
+      description: 'Estágio atualizado com sucesso!'
+    });
+  }, [showToast]);
+
+  const handleCreateOpportunity = () => {
+    if (!newOpportunity.title || !newOpportunity.company) {
+      showToast({
+        variant: 'error',
+        title: 'Campos Obrigatórios',
+        description: 'Preencha pelo menos o título e empresa'
+      });
+      return;
+    }
+
+    const opportunity: Opportunity = {
+      id: Date.now().toString(),
+      title: newOpportunity.title,
+      company: newOpportunity.company,
+      contact: newOpportunity.contact,
+      value: Number(newOpportunity.value) || 0,
+      probability: Number(newOpportunity.probability) || 0,
+      stage: newOpportunity.stage,
+      dueDate: newOpportunity.dueDate,
+      description: newOpportunity.description,
+      lastActivity: 'Agora',
+      source: newOpportunity.source,
+      tags: newOpportunity.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+    };
+
+    setOpportunities(prev => [...prev, opportunity]);
+    setNewOpportunity({
+      title: '', company: '', contact: '', value: '', probability: '',
+      stage: 'qualification', dueDate: '', description: '', source: '', tags: ''
+    });
+    setIsNewOpportunityOpen(false);
+
+    showToast({
+      variant: 'success',
+      action: 'create',
+      title: 'Oportunidade Criada',
+      description: `${opportunity.title} foi adicionada ao pipeline`
+    });
+  };
+
+  const handleDuplicateOpportunity = (opportunity: Opportunity) => {
+    const duplicated = {
+      ...opportunity,
+      id: Date.now().toString(),
+      title: `${opportunity.title} (Cópia)`,
+      lastActivity: 'Agora'
+    };
+    setOpportunities(prev => [...prev, duplicated]);
+    
+    showToast({
+      variant: 'success',
+      action: 'duplicate',
+      title: 'Oportunidade Duplicada',
+      description: `${duplicated.title} foi criada`
+    });
+  };
+
+  const handleDeleteOpportunity = (id: string) => {
+    const opportunity = opportunities.find(opp => opp.id === id);
+    setOpportunities(prev => prev.filter(opp => opp.id !== id));
+    
+    showToast({
+      variant: 'success',
+      action: 'delete',
+      title: 'Oportunidade Removida',
+      description: `${opportunity?.title} foi excluída`
+    });
+  };
+
+  const getOpportunitiesByStage = (stageId: string) => {
+    return opportunities.filter(opp => opp.stage === stageId);
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const getPipelineTotal = () => {
+    return opportunities.reduce((total, opp) => total + opp.value, 0);
+  };
+
+  const getAverageTicket = () => {
+    return opportunities.length > 0 ? getPipelineTotal() / opportunities.length : 0;
+  };
+
+  const getConversionRate = () => {
+    const total = opportunities.length;
+    const won = opportunities.filter(opp => opp.stage === 'closing').length;
+    return total > 0 ? Math.round((won / total) * 100) : 0;
+  };
+
+  const filteredOpportunities = opportunities.filter(opp => {
+    const matchesFilter = filter === '' || 
+      opp.title.toLowerCase().includes(filter.toLowerCase()) ||
+      opp.company.toLowerCase().includes(filter.toLowerCase());
+    
+    const matchesStage = selectedStage === 'all' || opp.stage === selectedStage;
+    
+    return matchesFilter && matchesStage;
+  });
 
   return (
-    <div className="h-screen bg-background overflow-y-auto">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card">
+      <div className="flex-none border-b bg-card">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center">
-                <Building2 className="h-6 w-6 mr-3" />
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+                <Target className="h-8 w-8 text-primary" />
                 CRM
               </h1>
-              <p className="text-muted-foreground mt-1">
-                Gerencie suas oportunidades e pipeline de vendas
-              </p>
+              <p className="text-muted-foreground">Gerencie suas oportunidades e pipeline de vendas</p>
             </div>
-            
-            <Button className="bg-primary hover:bg-primary-hover">
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Oportunidade
-            </Button>
+
+            <Dialog open={isNewOpportunityOpen} onOpenChange={setIsNewOpportunityOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary hover:bg-primary-hover text-primary-foreground">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Oportunidade
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Nova Oportunidade</DialogTitle>
+                  <DialogDescription>
+                    Adicione uma nova oportunidade ao seu pipeline
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">Título *</Label>
+                      <Input
+                        id="title"
+                        value={newOpportunity.title}
+                        onChange={(e) => setNewOpportunity(prev => ({...prev, title: e.target.value}))}
+                        placeholder="Nome da oportunidade"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="company">Empresa *</Label>
+                      <Input
+                        id="company"
+                        value={newOpportunity.company}
+                        onChange={(e) => setNewOpportunity(prev => ({...prev, company: e.target.value}))}
+                        placeholder="Nome da empresa"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="contact">Contato</Label>
+                      <Input
+                        id="contact"
+                        value={newOpportunity.contact}
+                        onChange={(e) => setNewOpportunity(prev => ({...prev, contact: e.target.value}))}
+                        placeholder="Nome do contato"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="value">Valor (R$)</Label>
+                      <Input
+                        id="value"
+                        type="number"
+                        value={newOpportunity.value}
+                        onChange={(e) => setNewOpportunity(prev => ({...prev, value: e.target.value}))}
+                        placeholder="0,00"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="probability">Probabilidade (%)</Label>
+                      <Input
+                        id="probability"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={newOpportunity.probability}
+                        onChange={(e) => setNewOpportunity(prev => ({...prev, probability: e.target.value}))}
+                        placeholder="70"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="stage">Estágio</Label>
+                      <Select value={newOpportunity.stage} onValueChange={(value) => setNewOpportunity(prev => ({...prev, stage: value}))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stages.map(stage => (
+                            <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="dueDate">Data Prevista</Label>
+                      <Input
+                        id="dueDate"
+                        type="date"
+                        value={newOpportunity.dueDate}
+                        onChange={(e) => setNewOpportunity(prev => ({...prev, dueDate: e.target.value}))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="source">Origem</Label>
+                      <Select value={newOpportunity.source} onValueChange={(value) => setNewOpportunity(prev => ({...prev, source: value}))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a origem" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                          <SelectItem value="E-mail">E-mail</SelectItem>
+                          <SelectItem value="Telefone">Telefone</SelectItem>
+                          <SelectItem value="Site">Site</SelectItem>
+                          <SelectItem value="Indicação">Indicação</SelectItem>
+                          <SelectItem value="Redes Sociais">Redes Sociais</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
+                      <Input
+                        id="tags"
+                        value={newOpportunity.tags}
+                        onChange={(e) => setNewOpportunity(prev => ({...prev, tags: e.target.value}))}
+                        placeholder="VIP, Urgente, Corporativo"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      value={newOpportunity.description}
+                      onChange={(e) => setNewOpportunity(prev => ({...prev, description: e.target.value}))}
+                      placeholder="Descreva os detalhes da oportunidade..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsNewOpportunityOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleCreateOpportunity}>
+                    Criar Oportunidade
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Métricas */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pipeline Total</p>
+                    <p className="text-2xl font-bold text-foreground">{formatCurrency(getPipelineTotal())}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-success" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Oportunidades</p>
+                    <p className="text-2xl font-bold text-foreground">{opportunities.length}</p>
+                  </div>
+                  <Target className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                    <p className="text-2xl font-bold text-foreground">{formatCurrency(getAverageTicket())}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-accent" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+                    <p className="text-2xl font-bold text-foreground">{getConversionRate()}%</p>
+                  </div>
+                  <BarChart3 className="h-8 w-8 text-warning" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filtros */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Buscar oportunidades..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <Select value={selectedStage} onValueChange={setSelectedStage}>
+              <SelectTrigger className="w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Estágios</SelectItem>
+                {stages.map(stage => (
+                  <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
 
-      {/* Métricas */}
-      <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pipeline Total</p>
-                <p className="text-2xl font-bold text-foreground">
-                  R$ {totalValue.toLocaleString('pt-BR')}
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-success" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Oportunidades</p>
-                <p className="text-2xl font-bold text-foreground">{deals.length}</p>
-              </div>
-              <Target className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Ticket Médio</p>
-                <p className="text-2xl font-bold text-foreground">
-                  R$ {avgDealValue.toLocaleString('pt-BR')}
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-accent" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
-                <p className="text-2xl font-bold text-foreground">68%</p>
-              </div>
-              <Users className="h-8 w-8 text-warning" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pipeline por Estágio */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Pipeline por Estágio</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {stages.map((stage, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/10 rounded-lg">
-                <div className="flex items-center space-x-3">
+      {/* Kanban Board */}
+      <div className="flex-1 p-6 overflow-x-auto">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-4 gap-6 min-w-max">
+            {stages.map((stage) => (
+              <div key={stage.id} className="min-w-80">
+                <div className="flex items-center gap-2 mb-4">
                   <div className={`w-3 h-3 rounded-full ${stage.color}`} />
-                  <span className="font-medium text-foreground">{stage.name}</span>
+                  <h3 className="font-semibold text-foreground">{stage.name}</h3>
+                  <Badge variant="secondary" className="ml-auto">
+                    {getOpportunitiesByStage(stage.id).length}
+                  </Badge>
                 </div>
-                <Badge variant="secondary">{stage.count}</Badge>
+
+                <Droppable droppableId={stage.id}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`space-y-3 min-h-96 p-2 rounded-lg transition-colors ${
+                        snapshot.isDraggingOver ? 'bg-muted/50' : 'bg-muted/20'
+                      }`}
+                    >
+                      {getOpportunitiesByStage(stage.id).map((opportunity, index) => (
+                        <Draggable key={opportunity.id} draggableId={opportunity.id} index={index}>
+                          {(provided, snapshot) => (
+                            <Card
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`cursor-move transition-all hover:shadow-md ${
+                                snapshot.isDragging ? 'shadow-lg rotate-2 scale-105' : ''
+                              }`}
+                            >
+                              <CardHeader className="pb-2">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <CardTitle className="text-sm font-medium line-clamp-2">
+                                      {opportunity.title}
+                                    </CardTitle>
+                                    <CardDescription className="flex items-center gap-1 mt-1">
+                                      <Building className="h-3 w-3" />
+                                      {opportunity.company}
+                                    </CardDescription>
+                                  </div>
+                                  
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem>
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        Visualizar
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem>
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Editar
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleDuplicateOpportunity(opportunity)}>
+                                        <Copy className="h-4 w-4 mr-2" />
+                                        Duplicar
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={() => handleDeleteOpportunity(opportunity.id)}
+                                        className="text-destructive"
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Excluir
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </CardHeader>
+
+                              <CardContent className="pt-0 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-lg font-bold text-success">
+                                    {formatCurrency(opportunity.value)}
+                                  </span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {opportunity.probability}%
+                                  </Badge>
+                                </div>
+
+                                {opportunity.contact && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <User className="h-3 w-3" />
+                                    {opportunity.contact}
+                                  </div>
+                                )}
+
+                                {opportunity.dueDate && (
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Calendar className="h-3 w-3" />
+                                    {new Date(opportunity.dueDate).toLocaleDateString('pt-BR')}
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  {opportunity.lastActivity}
+                                </div>
+
+                                {opportunity.source && (
+                                  <div className="flex items-center gap-1">
+                                    {opportunity.source === 'WhatsApp' && <MessageSquare className="h-3 w-3 text-green-600" />}
+                                    {opportunity.source === 'E-mail' && <Mail className="h-3 w-3 text-blue-600" />}
+                                    {opportunity.source === 'Telefone' && <Phone className="h-3 w-3 text-orange-600" />}
+                                    <span className="text-xs text-muted-foreground">{opportunity.source}</span>
+                                  </div>
+                                )}
+
+                                {opportunity.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {opportunity.tags.slice(0, 2).map((tag, idx) => (
+                                      <Badge key={idx} variant="secondary" className="text-xs px-1 py-0">
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                    {opportunity.tags.length > 2 && (
+                                      <Badge variant="secondary" className="text-xs px-1 py-0">
+                                        +{opportunity.tags.length - 2}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div className="flex gap-1 pt-2">
+                                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                                    <MessageSquare className="h-3 w-3 mr-1" />
+                                    Chat
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    Ligar
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
               </div>
             ))}
-          </CardContent>
-        </Card>
-
-        {/* Lista de Oportunidades */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Oportunidades Ativas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {deals.map((deal) => (
-              <Card key={deal.id} className="border border-border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-foreground">{deal.title}</h3>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Empresa:</span>
-                      <span className="text-sm font-medium text-foreground">{deal.company}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Valor:</span>
-                      <span className="text-sm font-bold text-success">
-                        R$ {deal.value.toLocaleString('pt-BR')}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Contato:</span>
-                      <span className="text-sm text-foreground">{deal.contact}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Fechamento:</span>
-                      <div className="flex items-center text-sm text-foreground">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {new Date(deal.closeDate).toLocaleDateString('pt-BR')}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-                    <Badge 
-                      variant={deal.stage === "Fechamento" ? "default" : "secondary"}
-                      className="text-xs"
-                    >
-                      {deal.stage}
-                    </Badge>
-                    
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-muted-foreground">Probabilidade:</span>
-                      <div className="flex items-center space-x-1">
-                        <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary transition-all"
-                            style={{ width: `${deal.probability}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium text-foreground">
-                          {deal.probability}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </CardContent>
-        </Card>
+          </div>
+        </DragDropContext>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default CRM;
