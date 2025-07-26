@@ -17,6 +17,7 @@ import { CRMIntegration } from "@/components/crm/CRMIntegration";
 import { AutomationEngine } from "@/components/crm/AutomationEngine";
 import { MultipleFunnels } from "@/components/crm/MultipleFunnels";
 import { AdvancedAnalytics } from "@/components/crm/AdvancedAnalytics";
+import { GoalsSystem } from "@/components/goals/GoalsSystem";
 import { 
   Users, 
   Plus, 
@@ -41,7 +42,8 @@ import {
   BarChart3,
   Bot,
   Workflow,
-  CalendarDays
+  CalendarDays,
+  Trophy
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
@@ -590,10 +592,14 @@ const CRM = () => {
       {/* Conteúdo Principal com Tabs */}
       <div className="flex-1 p-6">
         <Tabs defaultValue="kanban" className="h-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="kanban" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Pipeline Kanban
+            </TabsTrigger>
+            <TabsTrigger value="goals" className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Metas & Engajamento
             </TabsTrigger>
             <TabsTrigger value="funnels" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
@@ -871,6 +877,10 @@ const CRM = () => {
                 </DragDropContext>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="goals" className="h-full">
+            <GoalsSystem />
           </TabsContent>
 
           <TabsContent value="funnels" className="h-full">
