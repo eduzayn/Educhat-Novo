@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useElegantToast } from "@/components/ui/elegant-toast";
 import { CRMIntegration } from "@/components/crm/CRMIntegration";
-import { AutomationEngine } from "@/components/crm/AutomationEngine";
+import { AdvancedAnalytics } from "@/components/crm/AdvancedAnalytics";
 import { 
   Users, 
   Plus, 
@@ -477,7 +477,7 @@ const CRM = () => {
       {/* Conteúdo Principal com Tabs */}
       <div className="flex-1 p-6">
         <Tabs defaultValue="kanban" className="h-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="kanban" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Pipeline Kanban
@@ -489,6 +489,10 @@ const CRM = () => {
             <TabsTrigger value="automation" className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
               Automações
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
             </TabsTrigger>
           </TabsList>
 
@@ -679,8 +683,8 @@ const CRM = () => {
             <CRMIntegration />
           </TabsContent>
 
-          <TabsContent value="automation" className="h-full">
-            <AutomationEngine />
+          <TabsContent value="analytics" className="h-full">
+            <AdvancedAnalytics />
           </TabsContent>
         </Tabs>
       </div>
