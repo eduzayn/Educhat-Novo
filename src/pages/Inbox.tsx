@@ -8,7 +8,7 @@ export default function Inbox() {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
 
   return (
-    <div className="h-screen flex bg-background">
+    <div className="h-screen flex bg-background overflow-hidden">
       {/* Coluna 1: Filtros e Equipes */}
       <InboxFilters />
       
