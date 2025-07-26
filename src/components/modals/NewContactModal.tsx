@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   Plus, 
   User, 
@@ -13,8 +15,11 @@ import {
   MessageSquare,
   Tag,
   X,
-  Save
+  Save,
+  Send,
+  AlertTriangle
 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface NewContactModalProps {
   trigger?: React.ReactNode
@@ -23,38 +28,127 @@ interface NewContactModalProps {
 
 export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
   const [open, setOpen] = useState(false)
+  const { toast } = useToast()
+  
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     email: "",
     company: "",
-    preferredChannel: "WhatsApp",
+    assignedUser: "",
     observations: ""
   })
+  
+  // Estados para envio de mensagem ativa
+  const [sendActiveMessage, setSendActiveMessage] = useState(false)
+  const [selectedChannel, setSelectedChannel] = useState("")
+  const [activeMessage, setActiveMessage] = useState("")
+  
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState("")
 
-  const handleSave = () => {
-    const contactData = {
-      ...formData,
-      tags,
-      createdAt: new Date().toISOString()
+  // Mock dos canais WhatsApp configurados
+  const whatsappChannels = [
+    { id: "comercial", name: "WhatsApp Comercial", connected: true },
+    { id: "suporte", name: "WhatsApp Suporte", connected: false },
+    { id: "cobranca", name: "WhatsApp Cobrança", connected: true },
+    { id: "marketing", name: "WhatsApp Marketing", connected: true },
+    { id: "vendas", name: "WhatsApp Vendas", connected: false }
+  ]
+
+  // Mock dos usuários/proprietários
+  const users = [
+    { id: "1", name: "João Silva" },
+    { id: "2", name: "Maria Santos" },
+    { id: "3", name: "Pedro Costa" },
+    { id: "4", name: "Ana Oliveira" }
+  ]
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      toast({ title: "Nome é obrigatório", variant: "destructive" })
+      return false
     }
     
-    console.log("Novo contato:", contactData)
-    onSave?.(contactData)
+    if (sendActiveMessage && !selectedChannel) {
+      toast({ title: "Selecione um canal para enviar mensagem", variant: "destructive" })
+      return false
+    }
     
-    // Reset form
+    if (sendActiveMessage && !activeMessage.trim()) {
+      toast({ title: "Digite a mensagem ativa", variant: "destructive" })
+      return false
+    }
+    
+    if (selectedChannel && !activeMessage.trim()) {
+      toast({ title: "Digite a mensagem ativa", variant: "destructive" })
+      return false
+    }
+    
+    return true
+  }
+
+  const handleCreateContact = async () => {
+    if (!validateForm()) return
+
+    try {
+      const contactData = {
+        ...formData,
+        tags,
+        createdAt: new Date().toISOString(),
+        sendActiveMessage,
+        selectedChannel,
+        activeMessage: sendActiveMessage ? activeMessage : null
+      }
+      
+      console.log("Criando contato:", contactData)
+      
+      // Simular criação do contato
+      if (sendActiveMessage && selectedChannel && activeMessage) {
+        const channel = whatsappChannels.find(ch => ch.id === selectedChannel)
+        if (!channel?.connected) {
+          toast({ 
+            title: "Canal desconectado", 
+            description: "Contato criado, mas o canal WhatsApp está desconectado",
+            variant: "destructive" 
+          })
+        } else {
+          toast({ 
+            title: "Sucesso!", 
+            description: "Contato criado e mensagem enviada" 
+          })
+        }
+      } else {
+        toast({ title: "Contato criado com sucesso!" })
+      }
+      
+      onSave?.(contactData)
+      resetForm()
+      setOpen(false)
+      
+    } catch (error) {
+      toast({ 
+        title: "Erro ao criar contato", 
+        description: "Tente novamente",
+        variant: "destructive" 
+      })
+    }
+  }
+
+  const resetForm = () => {
     setFormData({
       name: "",
       phone: "",
       email: "",
       company: "",
-      preferredChannel: "WhatsApp",
+      assignedUser: "",
       observations: ""
     })
+    setSendActiveMessage(false)
+    setSelectedChannel("")
+    setActiveMessage("")
     setTags([])
-    setOpen(false)
+    setNewTag("")
   }
 
   const addTag = () => {
@@ -75,6 +169,9 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
     }
   }
 
+  // Verificar se há canais desconectados
+  const hasDisconnectedChannels = whatsappChannels.some(ch => !ch.connected)
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -94,6 +191,16 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
           </DialogTitle>
         </DialogHeader>
         
+        {/* Aviso sobre canais desconectados */}
+        {hasDisconnectedChannels && (
+          <Alert className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              WhatsApp não conectado. Configure nas Configurações → Canais para sincronização automática
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-6 py-4">
           {/* Informações Básicas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -122,22 +229,7 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
           {/* Contato */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone *</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  placeholder="+55 11 99999-9999"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -150,66 +242,107 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Canal Preferencial */}
-          <div className="space-y-2">
-            <Label htmlFor="channel">Canal Preferencial</Label>
-            <select
-              id="channel"
-              value={formData.preferredChannel}
-              onChange={(e) => setFormData({ ...formData, preferredChannel: e.target.value })}
-              className="w-full p-2 border border-border rounded-md bg-background"
-            >
-              <option value="WhatsApp">WhatsApp</option>
-              <option value="Instagram">Instagram</option>
-              <option value="Facebook">Facebook</option>
-              <option value="E-mail">E-mail</option>
-              <option value="Telefone">Telefone</option>
-            </select>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-3">
-            <Label>Tags</Label>
             
-            {/* Tags existentes */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    <Tag className="h-3 w-3" />
-                    {tag}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => removeTag(tag)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  placeholder="+55 11 99999-9999"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="pl-10"
+                />
               </div>
-            )}
-            
-            {/* Adicionar nova tag */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Adicionar tag..."
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1"
+            </div>
+          </div>
+
+          {/* Proprietário */}
+          <div className="space-y-2">
+            <Label htmlFor="assignedUser">Proprietário</Label>
+            <Select value={formData.assignedUser} onValueChange={(value) => setFormData({ ...formData, assignedUser: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o proprietário" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Enviar Mensagem Ativa */}
+          <div className="space-y-4 border-t pt-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="sendActiveMessage"
+                checked={sendActiveMessage}
+                onChange={(e) => setSendActiveMessage(e.target.checked)}
+                className="h-4 w-4"
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addTag}
-                disabled={!newTag.trim()}
+              <Label htmlFor="sendActiveMessage" className="flex items-center cursor-pointer">
+                <Send className="h-4 w-4 mr-2" />
+                Enviar Mensagem Ativa
+              </Label>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Configure um canal e mensagem para enviar automaticamente após criar o contato.
+            </p>
+
+            {/* Canal WhatsApp */}
+            <div className="space-y-2">
+              <Label htmlFor="whatsappChannel">Canal WhatsApp</Label>
+              <Select 
+                value={selectedChannel} 
+                onValueChange={(value) => {
+                  setSelectedChannel(value)
+                  if (value && !sendActiveMessage) {
+                    setSendActiveMessage(true)
+                  }
+                }}
               >
-                <Plus className="h-4 w-4" />
-              </Button>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um canal (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {whatsappChannels.map((channel) => (
+                    <SelectItem key={channel.id} value={channel.id} disabled={!channel.connected}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{channel.name}</span>
+                        {!channel.connected && (
+                          <Badge variant="destructive" className="ml-2 text-xs">
+                            Desconectado
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Mensagem Ativa */}
+            <div className="space-y-2">
+              <Label htmlFor="activeMessage">Mensagem Ativa</Label>
+              <Textarea
+                id="activeMessage"
+                placeholder="Digite a mensagem que será enviada automaticamente após criar o contato..."
+                value={activeMessage}
+                onChange={(e) => {
+                  setActiveMessage(e.target.value)
+                  if (e.target.value && !sendActiveMessage) {
+                    setSendActiveMessage(true)
+                  }
+                }}
+                rows={3}
+                disabled={!selectedChannel}
+              />
             </div>
           </div>
 
@@ -221,40 +354,28 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
               placeholder="Observações sobre o contato..."
               value={formData.observations}
               onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
-              rows={4}
+              rows={3}
             />
           </div>
         </div>
         
         {/* Ações */}
         <div className="flex justify-between">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => {
+            resetForm()
+            setOpen(false)
+          }}>
             Cancelar
           </Button>
           
-          <div className="flex gap-2">
-            <Button
-              onClick={handleSave}
-              disabled={!formData.name || !formData.phone}
-              className="bg-primary hover:bg-primary-hover"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Salvar Contato
-            </Button>
-            
-            <Button
-              onClick={() => {
-                handleSave()
-                // Aqui abriria uma nova conversa automaticamente
-                console.log("Criar conversa ativa para:", formData.name)
-              }}
-              disabled={!formData.name || !formData.phone}
-              variant="outline"
-            >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Salvar e Conversar
-            </Button>
-          </div>
+          <Button
+            onClick={handleCreateContact}
+            disabled={!formData.name.trim()}
+            className="bg-primary hover:bg-primary-hover"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Criar Contato
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
