@@ -11,7 +11,10 @@ import {
   Mail,
   Users,
   Circle,
-  User
+  User,
+  Star,
+  Eye,
+  EyeOff
 } from "lucide-react"
 
 const channels = [
@@ -33,6 +36,15 @@ const users = [
   { name: "Pedro Santos", count: 4, team: "Vendas", status: "busy", avatar: "P" },
   { name: "Maria Oliveira", count: 1, team: "Financeiro", status: "online", avatar: "M" },
   { name: "Carlos Lima", count: 2, team: "Suporte", status: "offline", avatar: "C" },
+]
+
+const readStatus = [
+  { name: "Não lidas", icon: EyeOff, count: 4, color: "bg-warning" },
+  { name: "Lidas", icon: Eye, count: 8, color: "bg-success" },
+]
+
+const favorites = [
+  { name: "Favoritos", icon: Star, count: 2, color: "bg-yellow-500" },
 ]
 
 const statuses = [
@@ -161,6 +173,66 @@ export function InboxFilters() {
               </Button>
             )
           })}
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Status de Leitura */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center">
+            <Eye className="h-4 w-4 mr-2" />
+            Status de Leitura
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {readStatus.map((status) => (
+            <Button
+              key={status.name}
+              variant="ghost"
+              className="w-full justify-between p-2 h-auto"
+            >
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full ${status.color} mr-3`} />
+                <status.icon className="h-4 w-4 mr-2" />
+                <span className="text-sm">{status.name}</span>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {status.count}
+              </Badge>
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Favoritos */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center">
+            <Star className="h-4 w-4 mr-2" />
+            Favoritos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {favorites.map((fav) => (
+            <Button
+              key={fav.name}
+              variant="ghost"
+              className="w-full justify-between p-2 h-auto"
+            >
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full ${fav.color} mr-3`} />
+                <fav.icon className="h-4 w-4 mr-2" />
+                <span className="text-sm">{fav.name}</span>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {fav.count}
+              </Badge>
+            </Button>
+          ))}
         </CardContent>
       </Card>
 
