@@ -10,7 +10,8 @@ import {
   Facebook, 
   Mail,
   Users,
-  Circle
+  Circle,
+  User
 } from "lucide-react"
 
 const channels = [
@@ -24,6 +25,14 @@ const teams = [
   { name: "Vendas", count: 5, color: "bg-primary" },
   { name: "Suporte", count: 4, color: "bg-accent" },
   { name: "Financeiro", count: 3, color: "bg-warning" },
+]
+
+const users = [
+  { name: "João Silva", count: 3, team: "Vendas", status: "online", avatar: "J" },
+  { name: "Ana Costa", count: 2, team: "Suporte", status: "online", avatar: "A" },
+  { name: "Pedro Santos", count: 4, team: "Vendas", status: "busy", avatar: "P" },
+  { name: "Maria Oliveira", count: 1, team: "Financeiro", status: "online", avatar: "M" },
+  { name: "Carlos Lima", count: 2, team: "Suporte", status: "offline", avatar: "C" },
 ]
 
 const statuses = [
@@ -100,6 +109,58 @@ export function InboxFilters() {
               </Badge>
             </Button>
           ))}
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Filtro por Usuário */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center">
+            <User className="h-4 w-4 mr-2" />
+            Usuários
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {users.map((user) => {
+            const getStatusColor = (status: string) => {
+              switch (status) {
+                case "online": return "bg-success"
+                case "busy": return "bg-warning"
+                case "offline": return "bg-muted"
+                default: return "bg-muted"
+              }
+            }
+
+            return (
+              <Button
+                key={user.name}
+                variant="ghost"
+                className="w-full justify-between p-2 h-auto"
+              >
+                <div className="flex items-center">
+                  <div className="relative mr-3">
+                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                      <span className="text-primary-foreground text-xs font-medium">
+                        {user.avatar}
+                      </span>
+                    </div>
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${getStatusColor(user.status)} border border-card`} />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm">{user.name}</span>
+                    <span className="text-xs text-muted-foreground">{user.team}</span>
+                  </div>
+                </div>
+                {user.count > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {user.count}
+                  </Badge>
+                )}
+              </Button>
+            )
+          })}
         </CardContent>
       </Card>
 
