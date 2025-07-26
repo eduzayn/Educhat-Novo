@@ -8,7 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useElegantToast } from "@/components/ui/elegant-toast";
+import { CRMIntegration } from "@/components/crm/CRMIntegration";
+import { AutomationEngine } from "@/components/crm/AutomationEngine";
 import { 
   Users, 
   Plus, 
@@ -30,7 +33,9 @@ import {
   User,
   Star,
   Zap,
-  BarChart3
+  BarChart3,
+  Bot,
+  Workflow
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -263,9 +268,9 @@ const CRM = () => {
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                 <Target className="h-8 w-8 text-primary" />
-                CRM
+                CRM Avançado
               </h1>
-              <p className="text-muted-foreground">Gerencie suas oportunidades e pipeline de vendas</p>
+              <p className="text-muted-foreground">Gerencie oportunidades, automações e integrações</p>
             </div>
 
             <Dialog open={isNewOpportunityOpen} onOpenChange={setIsNewOpportunityOpen}>
@@ -466,186 +471,218 @@ const CRM = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* Filtros */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar oportunidades..."
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            <Select value={selectedStage} onValueChange={setSelectedStage}>
-              <SelectTrigger className="w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Estágios</SelectItem>
-                {stages.map(stage => (
-                  <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       </div>
 
-      {/* Kanban Board */}
-      <div className="flex-1 p-6 overflow-x-auto">
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-4 gap-6 min-w-max">
-            {stages.map((stage) => (
-              <div key={stage.id} className="min-w-80">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className={`w-3 h-3 rounded-full ${stage.color}`} />
-                  <h3 className="font-semibold text-foreground">{stage.name}</h3>
-                  <Badge variant="secondary" className="ml-auto">
-                    {getOpportunitiesByStage(stage.id).length}
-                  </Badge>
-                </div>
+      {/* Conteúdo Principal com Tabs */}
+      <div className="flex-1 p-6">
+        <Tabs defaultValue="kanban" className="h-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="kanban" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Pipeline Kanban
+            </TabsTrigger>
+            <TabsTrigger value="integration" className="flex items-center gap-2">
+              <Workflow className="h-4 w-4" />
+              Integração Inbox
+            </TabsTrigger>
+            <TabsTrigger value="automation" className="flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              Automações
+            </TabsTrigger>
+          </TabsList>
 
-                <Droppable droppableId={stage.id}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`space-y-3 min-h-96 p-2 rounded-lg transition-colors ${
-                        snapshot.isDraggingOver ? 'bg-muted/50' : 'bg-muted/20'
-                      }`}
-                    >
-                      {getOpportunitiesByStage(stage.id).map((opportunity, index) => (
-                        <Draggable key={opportunity.id} draggableId={opportunity.id} index={index}>
+          <TabsContent value="kanban" className="h-full">
+            <div className="h-full">
+              {/* Filtros */}
+              <div className="flex gap-4 mb-6">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Buscar oportunidades..."
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                <Select value={selectedStage} onValueChange={setSelectedStage}>
+                  <SelectTrigger className="w-48">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Estágios</SelectItem>
+                    {stages.map(stage => (
+                      <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Kanban Board */}
+              <div className="overflow-x-auto">
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <div className="grid grid-cols-4 gap-6 min-w-max">
+                    {stages.map((stage) => (
+                      <div key={stage.id} className="min-w-80">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className={`w-3 h-3 rounded-full ${stage.color}`} />
+                          <h3 className="font-semibold text-foreground">{stage.name}</h3>
+                          <Badge variant="secondary" className="ml-auto">
+                            {getOpportunitiesByStage(stage.id).length}
+                          </Badge>
+                        </div>
+
+                        <Droppable droppableId={stage.id}>
                           {(provided, snapshot) => (
-                            <Card
+                            <div
                               ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`cursor-move transition-all hover:shadow-md ${
-                                snapshot.isDragging ? 'shadow-lg rotate-2 scale-105' : ''
+                              {...provided.droppableProps}
+                              className={`space-y-3 min-h-96 p-2 rounded-lg transition-colors ${
+                                snapshot.isDraggingOver ? 'bg-muted/50' : 'bg-muted/20'
                               }`}
                             >
-                              <CardHeader className="pb-2">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <CardTitle className="text-sm font-medium line-clamp-2">
-                                      {opportunity.title}
-                                    </CardTitle>
-                                    <CardDescription className="flex items-center gap-1 mt-1">
-                                      <Building className="h-3 w-3" />
-                                      {opportunity.company}
-                                    </CardDescription>
-                                  </div>
-                                  
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem>
-                                        <Eye className="h-4 w-4 mr-2" />
-                                        Visualizar
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem>
-                                        <Edit className="h-4 w-4 mr-2" />
-                                        Editar
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => handleDuplicateOpportunity(opportunity)}>
-                                        <Copy className="h-4 w-4 mr-2" />
-                                        Duplicar
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem 
-                                        onClick={() => handleDeleteOpportunity(opportunity.id)}
-                                        className="text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Excluir
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </CardHeader>
+                              {getOpportunitiesByStage(stage.id).map((opportunity, index) => (
+                                <Draggable key={opportunity.id} draggableId={opportunity.id} index={index}>
+                                  {(provided, snapshot) => (
+                                    <Card
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={`cursor-move transition-all hover:shadow-md ${
+                                        snapshot.isDragging ? 'shadow-lg rotate-2 scale-105' : ''
+                                      }`}
+                                    >
+                                      <CardHeader className="pb-2">
+                                        <div className="flex items-start justify-between">
+                                          <div className="flex-1">
+                                            <CardTitle className="text-sm font-medium line-clamp-2">
+                                              {opportunity.title}
+                                            </CardTitle>
+                                            <CardDescription className="flex items-center gap-1 mt-1">
+                                              <Building className="h-3 w-3" />
+                                              {opportunity.company}
+                                            </CardDescription>
+                                          </div>
+                                          
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                              <DropdownMenuItem>
+                                                <Eye className="h-4 w-4 mr-2" />
+                                                Visualizar
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem>
+                                                <Edit className="h-4 w-4 mr-2" />
+                                                Editar
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem onClick={() => handleDuplicateOpportunity(opportunity)}>
+                                                <Copy className="h-4 w-4 mr-2" />
+                                                Duplicar
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem 
+                                                onClick={() => handleDeleteOpportunity(opportunity.id)}
+                                                className="text-destructive"
+                                              >
+                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                Excluir
+                                              </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                        </div>
+                                      </CardHeader>
 
-                              <CardContent className="pt-0 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-lg font-bold text-success">
-                                    {formatCurrency(opportunity.value)}
-                                  </span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {opportunity.probability}%
-                                  </Badge>
-                                </div>
+                                      <CardContent className="pt-0 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-lg font-bold text-success">
+                                            {formatCurrency(opportunity.value)}
+                                          </span>
+                                          <Badge variant="outline" className="text-xs">
+                                            {opportunity.probability}%
+                                          </Badge>
+                                        </div>
 
-                                {opportunity.contact && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <User className="h-3 w-3" />
-                                    {opportunity.contact}
-                                  </div>
-                                )}
+                                        {opportunity.contact && (
+                                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <User className="h-3 w-3" />
+                                            {opportunity.contact}
+                                          </div>
+                                        )}
 
-                                {opportunity.dueDate && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Calendar className="h-3 w-3" />
-                                    {new Date(opportunity.dueDate).toLocaleDateString('pt-BR')}
-                                  </div>
-                                )}
+                                        {opportunity.dueDate && (
+                                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <Calendar className="h-3 w-3" />
+                                            {new Date(opportunity.dueDate).toLocaleDateString('pt-BR')}
+                                          </div>
+                                        )}
 
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  {opportunity.lastActivity}
-                                </div>
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                          <Clock className="h-3 w-3" />
+                                          {opportunity.lastActivity}
+                                        </div>
 
-                                {opportunity.source && (
-                                  <div className="flex items-center gap-1">
-                                    {opportunity.source === 'WhatsApp' && <MessageSquare className="h-3 w-3 text-green-600" />}
-                                    {opportunity.source === 'E-mail' && <Mail className="h-3 w-3 text-blue-600" />}
-                                    {opportunity.source === 'Telefone' && <Phone className="h-3 w-3 text-orange-600" />}
-                                    <span className="text-xs text-muted-foreground">{opportunity.source}</span>
-                                  </div>
-                                )}
+                                        {opportunity.source && (
+                                          <div className="flex items-center gap-1">
+                                            {opportunity.source === 'WhatsApp' && <MessageSquare className="h-3 w-3 text-green-600" />}
+                                            {opportunity.source === 'E-mail' && <Mail className="h-3 w-3 text-blue-600" />}
+                                            {opportunity.source === 'Telefone' && <Phone className="h-3 w-3 text-orange-600" />}
+                                            <span className="text-xs text-muted-foreground">{opportunity.source}</span>
+                                          </div>
+                                        )}
 
-                                {opportunity.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {opportunity.tags.slice(0, 2).map((tag, idx) => (
-                                      <Badge key={idx} variant="secondary" className="text-xs px-1 py-0">
-                                        {tag}
-                                      </Badge>
-                                    ))}
-                                    {opportunity.tags.length > 2 && (
-                                      <Badge variant="secondary" className="text-xs px-1 py-0">
-                                        +{opportunity.tags.length - 2}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                )}
+                                        {opportunity.tags.length > 0 && (
+                                          <div className="flex flex-wrap gap-1">
+                                            {opportunity.tags.slice(0, 2).map((tag, idx) => (
+                                              <Badge key={idx} variant="secondary" className="text-xs px-1 py-0">
+                                                {tag}
+                                              </Badge>
+                                            ))}
+                                            {opportunity.tags.length > 2 && (
+                                              <Badge variant="secondary" className="text-xs px-1 py-0">
+                                                +{opportunity.tags.length - 2}
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        )}
 
-                                <div className="flex gap-1 pt-2">
-                                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
-                                    <MessageSquare className="h-3 w-3 mr-1" />
-                                    Chat
-                                  </Button>
-                                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
-                                    <Phone className="h-3 w-3 mr-1" />
-                                    Ligar
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
+                                        <div className="flex gap-1 pt-2">
+                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                                            <MessageSquare className="h-3 w-3 mr-1" />
+                                            Chat
+                                          </Button>
+                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs">
+                                            <Phone className="h-3 w-3 mr-1" />
+                                            Ligar
+                                          </Button>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </div>
                           )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
+                        </Droppable>
+                      </div>
+                    ))}
+                  </div>
+                </DragDropContext>
               </div>
-            ))}
-          </div>
-        </DragDropContext>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="integration" className="h-full">
+            <CRMIntegration />
+          </TabsContent>
+
+          <TabsContent value="automation" className="h-full">
+            <AutomationEngine />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
