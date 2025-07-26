@@ -101,7 +101,7 @@ export function NewContactModal({ trigger, onSave }: NewContactModalProps) {
         activeMessage: sendActiveMessage ? activeMessage : null
       }
       
-      console.log("Criando contato:", contactData)
+      console.log("Criando contato com dados:", contactData)
       
       // Simular criação do contato
       if (sendActiveMessage && selectedChannel && activeMessage) {
