@@ -48,15 +48,16 @@ const whatsappChannels = [
 ]
 
 const otherChannels = [
-  { name: "Instagram", active: true, webhook: "https://api.educhat.com/webhook/instagram", token: "" },
-  { name: "Facebook", active: false, webhook: "", token: "" },
-  { name: "E-mail", active: true, webhook: "smtp.educhat.com:587", token: "" }
+  { id: 1, name: "Instagram", active: true, webhook: "https://api.educhat.com/webhook/instagram", token: "" },
+  { id: 2, name: "Facebook", active: false, webhook: "", token: "" },
+  { id: 3, name: "E-mail", active: true, webhook: "smtp.educhat.com:587", token: "" }
 ]
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile")
   const [teamsList, setTeamsList] = useState(teams)
   const [whatsappChannelsList, setWhatsappChannelsList] = useState(whatsappChannels)
+  const [otherChannelsList, setOtherChannelsList] = useState(otherChannels)
   const [isNewTeamModalOpen, setIsNewTeamModalOpen] = useState(false)
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false)
   const [isDeleteTeamDialogOpen, setIsDeleteTeamDialogOpen] = useState(false)
@@ -561,7 +562,7 @@ export default function Settings() {
                   <CardTitle>Outros Canais</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {otherChannels.map((channel, index) => (
+                  {otherChannelsList.map((channel, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
@@ -578,6 +579,11 @@ export default function Settings() {
                           <Label>Webhook/Configuração</Label>
                           <Input 
                             value={channel.webhook} 
+                            onChange={(e) => {
+                              setOtherChannelsList(prev => prev.map(ch => 
+                                ch.id === channel.id ? {...ch, webhook: e.target.value} : ch
+                              ))
+                            }}
                             placeholder="URL do webhook ou configuração"
                             className="mt-1"
                           />
@@ -587,6 +593,11 @@ export default function Settings() {
                           <Input 
                             type="password"
                             value={channel.token}
+                            onChange={(e) => {
+                              setOtherChannelsList(prev => prev.map(ch => 
+                                ch.id === channel.id ? {...ch, token: e.target.value} : ch
+                              ))
+                            }}
                             placeholder="Token de acesso"
                             className="mt-1"
                           />
