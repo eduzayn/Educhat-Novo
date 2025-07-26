@@ -17,7 +17,11 @@ import {
   Calendar,
   Filter,
   Download,
-  ChevronDown
+  ChevronDown,
+  Info,
+  X,
+  Eye,
+  Shield
 } from "lucide-react"
 
 interface ProductivityData {
@@ -112,6 +116,7 @@ export function TeamProductivity() {
   const [period, setPeriod] = useState('today')
   const [selectedUser, setSelectedUser] = useState('all')
   const [selectedChannel, setSelectedChannel] = useState('all')
+  const [showInfo, setShowInfo] = useState(true)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -173,6 +178,105 @@ export function TeamProductivity() {
 
   return (
     <div className="space-y-6">
+      {/* Informações sobre o Sistema de Monitoramento */}
+      {showInfo && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center text-blue-800">
+                <Info className="h-4 w-4 mr-2" />
+                Como funciona o monitoramento de produtividade
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800"
+                onClick={() => setShowInfo(false)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
+              <div className="space-y-2">
+                <div className="flex items-start space-x-2">
+                  <Activity className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Detecção de Atividade</p>
+                    <p className="text-xs text-blue-600">
+                      O sistema registra atividade através de cliques, digitação, envio de mensagens e navegação no sistema.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Clock className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Tempo Ativo</p>
+                    <p className="text-xs text-blue-600">
+                      Contabiliza apenas períodos com interação real. Inatividade superior a 10 minutos pausa a contagem.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-start space-x-2">
+                  <TrendingUp className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Cálculo de Eficiência</p>
+                    <p className="text-xs text-blue-600">
+                      Eficiência = (Tempo Ativo ÷ Tempo Total Online) × 100. Considera atendimentos e mensagens enviadas.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Shield className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Privacidade</p>
+                    <p className="text-xs text-blue-600">
+                      Monitoramos apenas atividade no sistema EduChat. Dados são usados exclusivamente para gestão de produtividade.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-center pt-2 border-t border-blue-200">
+              <div className="flex items-center space-x-4 text-xs text-blue-600">
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span>Ideal: 80%+ de eficiência</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                  <span>Baixa: 40-79% de eficiência</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  <span>Inativo: &lt;40% de eficiência</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!showInfo && (
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowInfo(true)}
+            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+          >
+            <Info className="h-4 w-4 mr-2" />
+            Mostrar informações do sistema
+          </Button>
+        </div>
+      )}
       {/* Resumo Geral */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
