@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from "react"
 import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { AudioRecorder } from "@/components/inbox/AudioRecorder"
+import { AudioPlayer } from "@/components/inbox/AudioPlayer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -51,6 +52,9 @@ interface Message {
   isFromUser: boolean
   isFromBot?: boolean
   status?: "sent" | "delivered" | "read"
+  type?: "text" | "audio" // Novo campo para tipo de mensagem
+  audioUrl?: string // URL do áudio para mensagens de áudio
+  audioDuration?: number // Duração do áudio em segundos
 }
 
 // Funções utilitárias para agrupamento de mensagens por data
@@ -115,7 +119,10 @@ const messages: Message[] = [
     content: "Estou procurando algo para automação residencial. Vocês trabalham com isso?",
     timestamp: "10:28",
     date: "2024-01-26", // Hoje
-    isFromUser: false
+    isFromUser: false,
+    type: "audio",
+    audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+    audioDuration: 45
   },
   {
     id: 4,
@@ -123,7 +130,10 @@ const messages: Message[] = [
     timestamp: "10:29",
     date: "2024-01-26", // Hoje
     isFromUser: true,
-    status: "delivered"
+    status: "delivered",
+    type: "audio",
+    audioUrl: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+    audioDuration: 32
   },
   {
     id: 5,
@@ -589,7 +599,21 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                         : "bg-chat-bubble-other text-chat-bubble-other-foreground border border-border"
                     }`}
                   >
-                    <p className="text-sm">{msg.content}</p>
+                    {/* Renderizar AudioPlayer ou texto baseado no tipo da mensagem */}
+                    {msg.type === "audio" && msg.audioUrl ? (
+                      <div className="space-y-2">
+                        <AudioPlayer 
+                          audioUrl={msg.audioUrl}
+                          isOwnMessage={msg.isFromUser}
+                          duration={msg.audioDuration}
+                        />
+                        {msg.content && (
+                          <p className="text-sm mt-2">{msg.content}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm">{msg.content}</p>
+                    )}
                     
                     <div className="flex items-center justify-end space-x-1 mt-2">
                       <span className={`text-xs ${
