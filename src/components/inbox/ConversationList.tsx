@@ -12,7 +12,9 @@ import {
   Facebook,
   Mail,
   Star,
-  Filter
+  Filter,
+  CheckCircle,
+  RotateCcw
 } from "lucide-react"
 
 // Mock data para conversas
@@ -26,6 +28,7 @@ const initialConversations = [
     unreadCount: 3,
     isPinned: true,
     isFavorite: true,
+    isResolved: false,
     avatar: null,
     status: "pending" // pending, answered, closed
   },
@@ -38,6 +41,7 @@ const initialConversations = [
     unreadCount: 0,
     isPinned: false,
     isFavorite: false,
+    isResolved: true,
     avatar: null,
     status: "answered"
   },
@@ -50,6 +54,7 @@ const initialConversations = [
     unreadCount: 1,
     isPinned: false,
     isFavorite: true,
+    isResolved: false,
     avatar: null,
     status: "pending"
   },
@@ -62,12 +67,13 @@ const initialConversations = [
     unreadCount: 0,
     isPinned: false,
     isFavorite: false,
+    isResolved: true,
     avatar: null,
     status: "closed"
   },
 ]
 
-type FilterType = "all" | "unread" | "favorites"
+type FilterType = "all" | "unread" | "favorites" | "active" | "resolved"
 
 const getChannelIcon = (channel: string) => {
   switch (channel) {
@@ -115,12 +121,25 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
     )
   }
 
+  const toggleResolved = (id: number, event: React.MouseEvent) => {
+    event.stopPropagation()
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === id ? { ...conv, isResolved: !conv.isResolved } : conv
+      )
+    )
+  }
+
   const filteredConversations = conversations.filter(conv => {
     switch (activeFilter) {
       case "unread":
         return conv.unreadCount > 0
       case "favorites":
         return conv.isFavorite
+      case "active":
+        return !conv.isResolved
+      case "resolved":
+        return conv.isResolved
       default:
         return true
     }
@@ -129,7 +148,9 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
   const filterCounts = {
     all: conversations.length,
     unread: conversations.filter(c => c.unreadCount > 0).length,
-    favorites: conversations.filter(c => c.isFavorite).length
+    favorites: conversations.filter(c => c.isFavorite).length,
+    active: conversations.filter(c => !c.isResolved).length,
+    resolved: conversations.filter(c => c.isResolved).length
   }
 
   return (
@@ -143,7 +164,7 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
           </Badge>
         </div>
         
-        {/* Filtros Rápidos */}
+        {/* Filtros Rápidos - Linha 1 */}
         <div className="flex gap-1 mt-3">
           <Button
             variant={activeFilter === "all" ? "default" : "ghost"}
@@ -153,6 +174,27 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
           >
             Todas ({filterCounts.all})
           </Button>
+          <Button
+            variant={activeFilter === "active" ? "default" : "ghost"}
+            size="sm"
+            className="text-xs h-7"
+            onClick={() => setActiveFilter("active")}
+          >
+            Ativas ({filterCounts.active})
+          </Button>
+          <Button
+            variant={activeFilter === "resolved" ? "default" : "ghost"}
+            size="sm"
+            className="text-xs h-7"
+            onClick={() => setActiveFilter("resolved")}
+          >
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Resolvidas ({filterCounts.resolved})
+          </Button>
+        </div>
+        
+        {/* Filtros Rápidos - Linha 2 */}
+        <div className="flex gap-1 mt-2">
           <Button
             variant={activeFilter === "unread" ? "default" : "ghost"}
             size="sm"
@@ -240,13 +282,30 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
                   </p>
 
                   <div className="flex items-center justify-between mt-2">
-                    {/* Status da conversa */}
-                    <div className="flex items-center space-x-1">
-                      <div className={`w-2 h-2 rounded-full ${getStatusColor(conversation.status)}`} />
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {conversation.status === "pending" ? "Pendente" : 
-                         conversation.status === "answered" ? "Respondida" : "Finalizada"}
-                      </span>
+                    {/* Status da conversa e botão resolver */}
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1">
+                        <div className={`w-2 h-2 rounded-full ${getStatusColor(conversation.status)}`} />
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {conversation.status === "pending" ? "Pendente" : 
+                           conversation.status === "answered" ? "Respondida" : "Finalizada"}
+                        </span>
+                      </div>
+                      
+                      {/* Botão Resolver/Reativar */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-auto hover:bg-transparent"
+                        onClick={(e) => toggleResolved(conversation.id, e)}
+                        title={conversation.isResolved ? "Reativar conversa" : "Marcar como resolvida"}
+                      >
+                        {conversation.isResolved ? (
+                          <RotateCcw className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                        ) : (
+                          <CheckCircle className="h-3 w-3 text-muted-foreground hover:text-success" />
+                        )}
+                      </Button>
                     </div>
 
                     {/* Contador de não lidas */}

@@ -14,7 +14,9 @@ import {
   User,
   Star,
   Eye,
-  EyeOff
+  EyeOff,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react"
 
 const channels = [
@@ -45,6 +47,11 @@ const readStatus = [
 
 const favorites = [
   { name: "Favoritos", icon: Star, count: 2, color: "bg-yellow-500" },
+]
+
+const resolutionStatus = [
+  { name: "Ativas", icon: AlertCircle, count: 2, color: "bg-primary" },
+  { name: "Resolvidas", icon: CheckCircle, count: 2, color: "bg-success" },
 ]
 
 const statuses = [
@@ -230,6 +237,36 @@ export function InboxFilters() {
               </div>
               <Badge variant="secondary" className="text-xs">
                 {fav.count}
+              </Badge>
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Status de Resolução */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center">
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Status de Resolução
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {resolutionStatus.map((status) => (
+            <Button
+              key={status.name}
+              variant="ghost"
+              className="w-full justify-between p-2 h-auto"
+            >
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full ${status.color} mr-3`} />
+                <status.icon className="h-4 w-4 mr-2" />
+                <span className="text-sm">{status.name}</span>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {status.count}
               </Badge>
             </Button>
           ))}
