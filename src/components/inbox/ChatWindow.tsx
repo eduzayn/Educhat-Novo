@@ -194,8 +194,8 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
 
   const handleMarkAsUnread = () => {
     toast({
-      title: "Conversa marcada como não lida",
-      description: "A conversa foi marcada como não lida."
+      title: "Marcado como não lido",
+      description: "A conversa foi marcada como não lida e aparecerá na lista."
     })
   }
 
