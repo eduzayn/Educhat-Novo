@@ -7,20 +7,20 @@
 @layer base {
   :root {
     /* Base colors */
-    --background: 248 250 252;
+    --background: 210 20% 98%;
     --foreground: 203 23% 30%;
 
     /* Card system */
-    --card: 255 255 255;
+    --card: 0 0% 100%;
     --card-foreground: 203 23% 30%;
 
     /* Popover system */
-    --popover: 255 255 255;
+    --popover: 0 0% 100%;
     --popover-foreground: 203 23% 30%;
 
     /* Primary brand - Professional blue */
     --primary: 213 89% 53%;
-    --primary-foreground: 255 255 255;
+    --primary-foreground: 0 0% 100%;
     --primary-hover: 213 89% 45%;
     --primary-light: 213 89% 96%;
 
@@ -34,16 +34,16 @@
 
     /* Accent - Success green */
     --accent: 142 71% 45%;
-    --accent-foreground: 255 255 255;
+    --accent-foreground: 0 0% 100%;
     --accent-light: 142 71% 96%;
 
     /* Status colors */
     --success: 142 71% 45%;
-    --success-foreground: 255 255 255;
+    --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
-    --warning-foreground: 255 255 255;
+    --warning-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 255 255 255;
+    --destructive-foreground: 0 0% 100%;
 
     /* Border and input */
     --border: 213 19% 92%;
@@ -52,7 +52,7 @@
 
     /* Chat specific colors */
     --chat-bubble-user: 213 89% 53%;
-    --chat-bubble-user-foreground: 255 255 255;
+    --chat-bubble-user-foreground: 0 0% 100%;
     --chat-bubble-other: 210 16% 98%;
     --chat-bubble-other-foreground: 203 23% 30%;
 
