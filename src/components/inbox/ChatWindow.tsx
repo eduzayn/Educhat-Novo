@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/hooks/use-toast"
 import { enhancedAIService } from "@/components/copilot/EnhancedAIService"
 import { KnowledgeIndicator } from "@/components/copilot/KnowledgeIndicator"
@@ -36,7 +38,9 @@ import {
   Settings,
   FileText,
   Download,
-  Mail
+  Mail,
+  Users,
+  User
 } from "lucide-react"
 
 interface Message {
@@ -91,6 +95,15 @@ const quickReplies = [
   "Aguarde um momento, por favor"
 ]
 
+// Mock data para usuários disponíveis
+const availableUsers = [
+  { id: "1", name: "João Silva", team: "Vendas", status: "online", avatar: "J" },
+  { id: "2", name: "Ana Costa", team: "Suporte", status: "online", avatar: "A" },
+  { id: "3", name: "Pedro Santos", team: "Vendas", status: "busy", avatar: "P" },
+  { id: "4", name: "Maria Oliveira", team: "Financeiro", status: "online", avatar: "M" },
+  { id: "5", name: "Carlos Lima", team: "Suporte", status: "offline", avatar: "C" },
+]
+
 interface ChatWindowProps {
   conversationId: number | null
 }
@@ -101,7 +114,9 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [isCallActive, setIsCallActive] = useState(false)
   const [callDuration, setCallDuration] = useState("00:00")
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const [transferType, setTransferType] = useState("team")
   const [transferTeam, setTransferTeam] = useState("")
+  const [transferUser, setTransferUser] = useState("")
   const [transferNote, setTransferNote] = useState("")
 
   const handleSendMessage = () => {
@@ -152,7 +167,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   }
 
   const handleTransfer = () => {
-    if (!transferTeam) {
+    if (transferType === "team" && !transferTeam) {
       toast({
         title: "Erro",
         description: "Selecione uma equipe para transferir.",
@@ -161,13 +176,26 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
       return
     }
 
+    if (transferType === "user" && !transferUser) {
+      toast({
+        title: "Erro", 
+        description: "Selecione um usuário para transferir.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const transferTarget = transferType === "team" ? transferTeam : availableUsers.find(u => u.id === transferUser)?.name
+    
     toast({
       title: "Conversa transferida",
-      description: `Transferido para equipe: ${transferTeam}`
+      description: `Transferido para ${transferType === "team" ? "equipe" : "usuário"}: ${transferTarget}`
     })
     
     setIsTransferModalOpen(false)
+    setTransferType("team")
     setTransferTeam("")
+    setTransferUser("")
     setTransferNote("")
   }
 
@@ -262,32 +290,92 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                     Transferir
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Transferir Conversa</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label>Equipe de Destino</Label>
-                      <Select value={transferTeam} onValueChange={setTransferTeam}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma equipe" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="vendas">Vendas</SelectItem>
-                          <SelectItem value="suporte">Suporte Técnico</SelectItem>
-                          <SelectItem value="financeiro">Financeiro</SelectItem>
-                          <SelectItem value="gerencia">Gerência</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label>Tipo de Transferência</Label>
+                      <RadioGroup
+                        value={transferType}
+                        onValueChange={setTransferType}
+                        className="flex flex-col space-y-2 mt-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="team" id="team" />
+                          <Label htmlFor="team" className="flex items-center cursor-pointer">
+                            <Users className="h-4 w-4 mr-2" />
+                            Transferir para equipe
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="user" id="user" />
+                          <Label htmlFor="user" className="flex items-center cursor-pointer">
+                            <User className="h-4 w-4 mr-2" />
+                            Transferir para usuário
+                          </Label>
+                        </div>
+                      </RadioGroup>
                     </div>
+                    
+                    {transferType === "team" && (
+                      <div>
+                        <Label>Equipe de Destino</Label>
+                        <Select value={transferTeam} onValueChange={setTransferTeam}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma equipe" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="vendas">Vendas</SelectItem>
+                            <SelectItem value="suporte">Suporte Técnico</SelectItem>
+                            <SelectItem value="financeiro">Financeiro</SelectItem>
+                            <SelectItem value="gerencia">Gerência</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {transferType === "user" && (
+                      <div>
+                        <Label>Usuário de Destino</Label>
+                        <Select value={transferUser} onValueChange={setTransferUser}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um usuário" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableUsers.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                <div className="flex items-center space-x-2">
+                                  <div className="relative">
+                                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                      <span className="text-primary-foreground text-xs font-medium">
+                                        {user.avatar}
+                                      </span>
+                                    </div>
+                                    <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-card ${
+                                      user.status === "online" ? "bg-success" : 
+                                      user.status === "busy" ? "bg-warning" : "bg-muted"
+                                    }`} />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm">{user.name}</span>
+                                    <span className="text-xs text-muted-foreground">{user.team}</span>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     
                     <div>
                       <Label>Nota de Transferência (opcional)</Label>
                       <Textarea
                         value={transferNote}
                         onChange={(e) => setTransferNote(e.target.value)}
-                        placeholder="Contexto ou observações para a equipe..."
+                        placeholder="Contexto ou observações para a transferência..."
                         rows={3}
                       />
                     </div>
