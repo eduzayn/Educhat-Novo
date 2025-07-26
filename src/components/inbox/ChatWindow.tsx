@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from "react"
 import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { AudioRecorder } from "@/components/inbox/AudioRecorder"
 import { AudioPlayer } from "@/components/inbox/AudioPlayer"
+import { AttachmentModal } from "@/components/inbox/AttachmentModal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -209,6 +210,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [isCallActive, setIsCallActive] = useState(false)
   const [callDuration, setCallDuration] = useState("00:00")
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false)
   const [transferType, setTransferType] = useState("team")
   const [transferTeam, setTransferTeam] = useState("")
   const [transferUser, setTransferUser] = useState("")
@@ -334,6 +336,87 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     setTransferTeam("")
     setTransferUser("")
     setTransferNote("")
+  }
+
+  const handleAttachmentSelect = (type: string) => {
+    switch (type) {
+      case "document":
+        // Trigger file input for documents
+        const documentInput = document.createElement('input')
+        documentInput.type = 'file'
+        documentInput.accept = '.pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx'
+        documentInput.onchange = (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0]
+          if (file) {
+            toast({
+              title: "Documento selecionado",
+              description: `${file.name} pronto para envio.`
+            })
+          }
+        }
+        documentInput.click()
+        break
+      
+      case "media":
+        // Trigger file input for images/videos
+        const mediaInput = document.createElement('input')
+        mediaInput.type = 'file'
+        mediaInput.accept = 'image/*,video/*'
+        mediaInput.multiple = true
+        mediaInput.onchange = (e) => {
+          const files = (e.target as HTMLInputElement).files
+          if (files && files.length > 0) {
+            toast({
+              title: "Mídia selecionada",
+              description: `${files.length} arquivo(s) pronto(s) para envio.`
+            })
+          }
+        }
+        mediaInput.click()
+        break
+      
+      case "camera":
+        toast({
+          title: "Câmera",
+          description: "Funcionalidade em desenvolvimento."
+        })
+        break
+      
+      case "audio":
+        setShowAudioRecorder(true)
+        break
+      
+      case "contact":
+        toast({
+          title: "Compartilhar contato",
+          description: "Funcionalidade em desenvolvimento."
+        })
+        break
+      
+      case "poll":
+        toast({
+          title: "Criar enquete",
+          description: "Funcionalidade em desenvolvimento."
+        })
+        break
+      
+      case "event":
+        toast({
+          title: "Criar evento",
+          description: "Funcionalidade em desenvolvimento."
+        })
+        break
+      
+      case "sticker":
+        toast({
+          title: "Nova figurinha",
+          description: "Funcionalidade em desenvolvimento."
+        })
+        break
+      
+      default:
+        break
+    }
   }
 
   const handleArchiveConversation = () => {
@@ -694,7 +777,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                   variant="ghost"
                   size="sm"
                   className="p-1"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => setIsAttachmentModalOpen(true)}
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>
@@ -759,6 +842,13 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
           </div>
         </div>
       )}
+
+      {/* Modal de Anexos */}
+      <AttachmentModal
+        open={isAttachmentModalOpen}
+        onOpenChange={setIsAttachmentModalOpen}
+        onSelectAttachment={handleAttachmentSelect}
+      />
     </div>
   )
 }
