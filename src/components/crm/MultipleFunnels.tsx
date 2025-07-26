@@ -45,7 +45,11 @@ interface DepartmentFunnel {
   isDefault: boolean;
 }
 
-export const MultipleFunnels = () => {
+interface MultipleFunnelsProps {
+  onFunnelChange?: (departmentId: string, funnelId: string, stages: FunnelStage[]) => void;
+}
+
+export const MultipleFunnels = ({ onFunnelChange }: MultipleFunnelsProps) => {
   const { showToast } = useElegantToast();
 
   const [departments] = useState<Department[]>([
@@ -127,12 +131,34 @@ export const MultipleFunnels = () => {
   ]);
 
   const [selectedDepartment, setSelectedDepartment] = useState('sales');
+  const [activeFunnels, setActiveFunnels] = useState<{[key: string]: string}>({
+    'sales': 'sales_funnel',
+    'support': 'support_funnel', 
+    'administrative': 'administrative_funnel',
+    'financial': 'financial_funnel'
+  });
   const [isNewFunnelOpen, setIsNewFunnelOpen] = useState(false);
   const [isEditStagesOpen, setIsEditStagesOpen] = useState(false);
   const [editingFunnel, setEditingFunnel] = useState<DepartmentFunnel | null>(null);
 
   const getCurrentFunnel = () => {
-    return funnels.find(f => f.departmentId === selectedDepartment && f.isDefault);
+    const activeFunnelId = activeFunnels[selectedDepartment];
+    return funnels.find(f => f.id === activeFunnelId);
+  };
+
+  const handleSetActiveFunnel = (departmentId: string, funnelId: string) => {
+    setActiveFunnels(prev => ({...prev, [departmentId]: funnelId}));
+    
+    const funnel = funnels.find(f => f.id === funnelId);
+    if (funnel && onFunnelChange) {
+      onFunnelChange(departmentId, funnelId, funnel.stages);
+    }
+
+    showToast({
+      variant: 'success',
+      title: 'Funil Ativo Alterado',
+      description: 'Funil ativo atualizado com sucesso'
+    });
   };
 
   const getCurrentDepartment = () => {
@@ -406,6 +432,24 @@ export const MultipleFunnels = () => {
                     </div>
 
                     <div className="flex gap-2">
+                      {activeFunnels[selectedDepartment] !== funnel.id && (
+                        <Button 
+                          size="sm" 
+                          variant="default"
+                          onClick={() => handleSetActiveFunnel(selectedDepartment, funnel.id)}
+                        >
+                          <Target className="h-4 w-4 mr-1" />
+                          Ativar
+                        </Button>
+                      )}
+                      
+                      {activeFunnels[selectedDepartment] === funnel.id && (
+                        <Badge variant="default" className="px-3 py-1">
+                          <Target className="h-3 w-3 mr-1" />
+                          Ativo
+                        </Badge>
+                      )}
+                      
                       <Button 
                         size="sm" 
                         variant="outline"

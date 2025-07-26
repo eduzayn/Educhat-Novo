@@ -66,12 +66,14 @@ interface Stage {
 const CRM = () => {
   const { showToast } = useElegantToast();
   
-  const [stages] = useState<Stage[]>([
+  const [stages, setStages] = useState<Stage[]>([
     { id: 'qualification', name: 'Qualificação', color: 'bg-yellow-500', count: 3 },
     { id: 'proposal', name: 'Proposta', color: 'bg-blue-500', count: 2 },
     { id: 'negotiation', name: 'Negociação', color: 'bg-orange-500', count: 1 },
     { id: 'closing', name: 'Fechamento', color: 'bg-green-500', count: 1 }
   ]);
+
+  const [activeDepartment, setActiveDepartment] = useState('sales');
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([
     {
@@ -134,6 +136,16 @@ const CRM = () => {
 
   const [filter, setFilter] = useState('');
   const [selectedStage, setSelectedStage] = useState('all');
+
+  const handleFunnelChange = (departmentId: string, funnelId: string, funnelStages: any[]) => {
+    setActiveDepartment(departmentId);
+    setStages(funnelStages.map(stage => ({
+      id: stage.id,
+      name: stage.name,
+      color: stage.color,
+      count: getOpportunitiesByStage(stage.id).length
+    })));
+  };
 
   const handleDragEnd = useCallback((result: DropResult) => {
     if (!result.destination) return;
@@ -503,7 +515,7 @@ const CRM = () => {
           </TabsList>
 
           <TabsContent value="funnels" className="h-full">
-            <MultipleFunnels />
+            <MultipleFunnels onFunnelChange={handleFunnelChange} />
           </TabsContent>
 
           <TabsContent value="kanban" className="h-full">{" "}
