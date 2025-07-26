@@ -83,7 +83,7 @@ export function InboxFilters() {
   }
 
   return (
-    <div className="w-80 bg-card border-r border-border p-4 space-y-4 h-full overflow-y-auto">
+    <div className="w-full md:w-80 bg-card border-r border-border p-4 space-y-4 h-full overflow-y-auto">
       {/* Filtro de Período - Hub Central */}
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader className="pb-3">

@@ -148,7 +148,7 @@ export function ContactDetails({ onNoteAddedToConversation }: { onNoteAddedToCon
   }
 
   return (
-    <div className="w-80 bg-card border-l border-border h-full overflow-y-auto">
+    <div className="w-full md:w-80 bg-card border-l border-border h-full overflow-y-auto">
       {/* Header do contato */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">

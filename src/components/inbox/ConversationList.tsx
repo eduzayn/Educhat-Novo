@@ -262,7 +262,7 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
   }
 
   return (
-    <div className="w-80 bg-card border-r border-border">
+    <div className="w-full md:w-80 bg-card border-r border-border">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
@@ -273,11 +273,11 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
         </div>
         
         {/* Filtros Rápidos - Linha 1 */}
-        <div className="flex gap-1 mt-3">
+        <div className="flex gap-1 mt-3 flex-wrap">
           <Button
             variant={activeFilter === "all" ? "default" : "ghost"}
             size="sm"
-            className="text-xs h-7"
+            className="text-xs h-7 flex-shrink-0"
             onClick={() => setActiveFilter("all")}
           >
             Todas ({filterCounts.all})
@@ -285,7 +285,7 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
           <Button
             variant={activeFilter === "active" ? "default" : "ghost"}
             size="sm"
-            className="text-xs h-7"
+            className="text-xs h-7 flex-shrink-0"
             onClick={() => setActiveFilter("active")}
           >
             Ativas ({filterCounts.active})
@@ -293,20 +293,22 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
           <Button
             variant={activeFilter === "resolved" ? "default" : "ghost"}
             size="sm"
-            className="text-xs h-7"
+            className="text-xs h-7 flex-shrink-0"
             onClick={() => setActiveFilter("resolved")}
           >
             <CheckCircle className="h-3 w-3 mr-1" />
-            Resolvidas ({filterCounts.resolved})
+            <span className="hidden sm:inline">Resolvidas</span>
+            <span className="sm:hidden">({filterCounts.resolved})</span>
+            <span className="hidden sm:inline"> ({filterCounts.resolved})</span>
           </Button>
         </div>
         
         {/* Filtros Rápidos - Linha 2 */}
-        <div className="flex gap-1 mt-2">
+        <div className="flex gap-1 mt-2 flex-wrap">
           <Button
             variant={activeFilter === "unread" ? "default" : "ghost"}
             size="sm"
-            className="text-xs h-7"
+            className="text-xs h-7 flex-shrink-0"
             onClick={() => setActiveFilter("unread")}
           >
             Não lidas ({filterCounts.unread})
@@ -314,11 +316,13 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
           <Button
             variant={activeFilter === "favorites" ? "default" : "ghost"}
             size="sm"
-            className="text-xs h-7"
+            className="text-xs h-7 flex-shrink-0"
             onClick={() => setActiveFilter("favorites")}
           >
             <Star className="h-3 w-3 mr-1" />
-            Favoritos ({filterCounts.favorites})
+            <span className="hidden sm:inline">Favoritos</span>
+            <span className="sm:hidden">({filterCounts.favorites})</span>
+            <span className="hidden sm:inline"> ({filterCounts.favorites})</span>
           </Button>
         </div>
       </div>
