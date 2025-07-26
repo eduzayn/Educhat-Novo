@@ -2,8 +2,10 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { StickyNote } from "lucide-react"
+import { StickyNote, Mic, MicOff, Volume2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition"
+import { cn } from "@/lib/utils"
 
 interface InternalNoteButtonProps {
   contactId: number
@@ -16,6 +18,27 @@ export function InternalNoteButton({ contactId, onNoteAdded, onNoteAddedToConver
   const [showDialog, setShowDialog] = useState(false)
   const [noteContent, setNoteContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Speech recognition setup
+  const {
+    isListening,
+    isSupported,
+    transcript,
+    startListening,
+    stopListening,
+    resetTranscript
+  } = useSpeechRecognition({
+    onTranscript: (newTranscript) => {
+      // Adicionar o novo texto transcrito ao conteúdo existente
+      setNoteContent(prev => {
+        const separator = prev.trim() ? ' ' : ''
+        return prev + separator + newTranscript
+      })
+    },
+    language: 'pt-BR',
+    continuous: false,
+    interimResults: false
+  })
 
   // Mock user data - substituir por hook de autenticação real
   const user = {
@@ -79,10 +102,26 @@ export function InternalNoteButton({ contactId, onNoteAdded, onNoteAddedToConver
   const handleCancel = () => {
     setShowDialog(false)
     setNoteContent('')
+    resetTranscript()
+    if (isListening) {
+      stopListening()
+    }
+  }
+
+  // Limpar tudo quando o modal fechar
+  const handleDialogChange = (open: boolean) => {
+    setShowDialog(open)
+    if (!open) {
+      setNoteContent('')
+      resetTranscript()
+      if (isListening) {
+        stopListening()
+      }
+    }
   }
 
   return (
-    <Dialog open={showDialog} onOpenChange={setShowDialog}>
+    <Dialog open={showDialog} onOpenChange={handleDialogChange}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
@@ -104,21 +143,76 @@ export function InternalNoteButton({ contactId, onNoteAdded, onNoteAddedToConver
         
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Nota (visível apenas para a equipe interna)
-            </label>
-            <Textarea
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              placeholder="Digite sua nota interna sobre este contato..."
-              className="min-h-[120px] resize-none"
-              autoFocus
-            />
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">
+                Nota (visível apenas para a equipe interna)
+              </label>
+              
+              {/* Indicador de suporte de voz */}
+              {isSupported && (
+                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                  <Volume2 className="w-3 h-3" />
+                  <span>Ditado por voz disponível</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="relative">
+              <Textarea
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                placeholder={isSupported ? "Digite ou use o microfone para ditar sua nota..." : "Digite sua nota interna sobre este contato..."}
+                className="min-h-[120px] resize-none pr-12"
+                autoFocus
+              />
+              
+              {/* Botão de microfone */}
+              {isSupported && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "absolute top-2 right-2 h-8 w-8 p-0 rounded-full transition-all",
+                    isListening 
+                      ? "bg-red-100 text-red-600 hover:bg-red-200 animate-pulse" 
+                      : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                  )}
+                  onClick={isListening ? stopListening : startListening}
+                  title={isListening ? "Parar gravação" : "Começar ditado por voz"}
+                >
+                  {isListening ? (
+                    <MicOff className="w-4 h-4" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
+                  )}
+                </Button>
+              )}
+            </div>
+            
+            {/* Indicador de transcrição ativa */}
+            {isListening && (
+              <div className="flex items-center space-x-2 text-sm text-red-600 bg-red-50 p-2 rounded-lg">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span>Ouvindo... Fale agora para transcrever sua nota</span>
+              </div>
+            )}
+            
+            {/* Transcrição em tempo real */}
+            {transcript && (
+              <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded-lg">
+                <span className="font-medium">Transcrevendo: </span>
+                <span className="italic">"{transcript}"</span>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center text-xs text-gray-500">
             <StickyNote className="w-3 h-3 mr-1" />
             Esta nota será salva como privada e visível apenas para a equipe
+            {isSupported && (
+              <span className="ml-2">• Use o microfone para acessibilidade</span>
+            )}
           </div>
           
           <div className="flex justify-end space-x-2">
