@@ -123,7 +123,7 @@ export function EduChatSidebar({ collapsed, onToggle }: SidebarProps) {
                 {item.badge && (
                 <Badge 
                   variant="secondary" 
-                  className="ml-auto bg-muted text-muted-foreground text-xs px-1.5 py-0.5"
+                  className="ml-auto bg-foreground text-background text-xs px-1.5 py-0.5"
                 >
                   {item.badge}
                 </Badge>
