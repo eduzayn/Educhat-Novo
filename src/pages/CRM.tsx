@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useElegantToast } from "@/components/ui/elegant-toast";
 import { CRMIntegration } from "@/components/crm/CRMIntegration";
+import { AutomationEngine } from "@/components/crm/AutomationEngine";
 import { AdvancedAnalytics } from "@/components/crm/AdvancedAnalytics";
 import { 
   Users, 
@@ -683,7 +684,11 @@ const CRM = () => {
             <CRMIntegration />
           </TabsContent>
 
-          <TabsContent value="analytics" className="h-full">
+          <TabsContent value="automation" className="h-full">
+            <AutomationEngine />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="h-full">{" "}
             <AdvancedAnalytics />
           </TabsContent>
         </Tabs>
