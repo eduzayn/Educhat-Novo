@@ -6,6 +6,12 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/hooks/use-toast"
 import { 
   Send, 
   Paperclip, 
@@ -13,11 +19,21 @@ import {
   Bot, 
   MoreVertical,
   Phone,
+  PhoneCall,
+  PhoneOff,
   MessageSquare,
   Clock,
   Check,
   CheckCheck,
-  ArrowRight
+  ArrowRight,
+  UserPlus,
+  Archive,
+  Star,
+  Flag,
+  Trash2,
+  Settings,
+  FileText,
+  Download
 } from "lucide-react"
 
 interface Message {
@@ -79,6 +95,11 @@ interface ChatWindowProps {
 export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [message, setMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
+  const [isCallActive, setIsCallActive] = useState(false)
+  const [callDuration, setCallDuration] = useState("00:00")
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const [transferTeam, setTransferTeam] = useState("")
+  const [transferNote, setTransferNote] = useState("")
 
   const handleSendMessage = () => {
     if (message.trim()) {
@@ -92,6 +113,80 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
       e.preventDefault()
       handleSendMessage()
     }
+  }
+
+  const handleStartCall = () => {
+    setIsCallActive(true)
+    // Simulate call timer
+    let seconds = 0
+    const timer = setInterval(() => {
+      seconds++
+      const mins = Math.floor(seconds / 60)
+      const secs = seconds % 60
+      setCallDuration(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`)
+    }, 1000)
+    
+    toast({
+      title: "Chamada iniciada",
+      description: "Conectando com Maria Silva..."
+    })
+    
+    // Store timer in a ref if you want to clear it later
+    setTimeout(() => {
+      if (timer) {
+        // Auto cleanup for demo purposes
+      }
+    }, 60000)
+  }
+
+  const handleEndCall = () => {
+    setIsCallActive(false)
+    setCallDuration("00:00")
+    toast({
+      title: "Chamada finalizada",
+      description: `Duração: ${callDuration}`
+    })
+  }
+
+  const handleTransfer = () => {
+    if (!transferTeam) {
+      toast({
+        title: "Erro",
+        description: "Selecione uma equipe para transferir.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    toast({
+      title: "Conversa transferida",
+      description: `Transferido para equipe: ${transferTeam}`
+    })
+    
+    setIsTransferModalOpen(false)
+    setTransferTeam("")
+    setTransferNote("")
+  }
+
+  const handleArchiveConversation = () => {
+    toast({
+      title: "Conversa arquivada",
+      description: "A conversa foi movida para o arquivo."
+    })
+  }
+
+  const handleStarConversation = () => {
+    toast({
+      title: "Conversa marcada",
+      description: "Adicionada aos favoritos."
+    })
+  }
+
+  const handleFlagConversation = () => {
+    toast({
+      title: "Conversa sinalizada",
+      description: "Marcada para revisão."
+    })
   }
 
   if (!conversationId) {
@@ -136,19 +231,105 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <Phone className="h-4 w-4 mr-2" />
-                Ligar
-              </Button>
+              {/* Call Button */}
+              {!isCallActive ? (
+                <Button variant="outline" size="sm" onClick={handleStartCall}>
+                  <Phone className="h-4 w-4 mr-2" />
+                  Ligar
+                </Button>
+              ) : (
+                <Button variant="destructive" size="sm" onClick={handleEndCall}>
+                  <PhoneOff className="h-4 w-4 mr-2" />
+                  {callDuration}
+                </Button>
+              )}
               
-              <Button variant="outline" size="sm">
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Transferir
-              </Button>
+              {/* Transfer Button */}
+              <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    Transferir
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Transferir Conversa</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Equipe de Destino</Label>
+                      <Select value={transferTeam} onValueChange={setTransferTeam}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma equipe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="vendas">Vendas</SelectItem>
+                          <SelectItem value="suporte">Suporte Técnico</SelectItem>
+                          <SelectItem value="financeiro">Financeiro</SelectItem>
+                          <SelectItem value="gerencia">Gerência</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label>Nota de Transferência (opcional)</Label>
+                      <Textarea
+                        value={transferNote}
+                        onChange={(e) => setTransferNote(e.target.value)}
+                        placeholder="Contexto ou observações para a equipe..."
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setIsTransferModalOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleTransfer}>
+                        Transferir
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               
-              <Button variant="outline" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
+              {/* More Options Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleStarConversation}>
+                    <Star className="h-4 w-4 mr-2" />
+                    Marcar como favorito
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleFlagConversation}>
+                    <Flag className="h-4 w-4 mr-2" />
+                    Sinalizar conversa
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Adicionar participante
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Exportar conversa
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleArchiveConversation}>
+                    <Archive className="h-4 w-4 mr-2" />
+                    Arquivar conversa
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir conversa
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardHeader>
