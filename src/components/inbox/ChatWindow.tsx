@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react"
+import { useState, useRef, useMemo, useEffect } from "react"
 import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { AudioRecorder } from "@/components/inbox/AudioRecorder"
 import { AudioPlayer } from "@/components/inbox/AudioPlayer"
@@ -228,9 +228,10 @@ const availableUsers = [
 
 interface ChatWindowProps {
   conversationId: number | null
+  onNoteCallbackReady?: (callback: (note: { content: string, authorName: string, authorId?: string }) => void) => void
 }
 
-export function ChatWindow({ conversationId }: ChatWindowProps) {
+export function ChatWindow({ conversationId, onNoteCallbackReady }: ChatWindowProps) {
   const [message, setMessage] = useState("")
   const [internalMessages, setInternalMessages] = useState<Message[]>(messages)
   const [isRecording, setIsRecording] = useState(false)
@@ -339,6 +340,13 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
 
     setInternalMessages(prev => [...prev, newInternalNote])
   }
+
+  // Expor a callback para componentes externos
+  useEffect(() => {
+    if (onNoteCallbackReady) {
+      onNoteCallbackReady(handleAddInternalNoteToConversation)
+    }
+  }, [onNoteCallbackReady])
 
   const handleStartCall = () => {
     setIsCallActive(true)

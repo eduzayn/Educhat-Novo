@@ -6,6 +6,7 @@ import { ContactDetails } from "@/components/inbox/ContactDetails"
 
 export default function Inbox() {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
+  const [onNoteAddedToConversation, setOnNoteAddedToConversation] = useState<((note: { content: string, authorName: string, authorId?: string }) => void) | null>(null)
 
   return (
     <div className="h-screen flex bg-background overflow-hidden">
@@ -19,10 +20,13 @@ export default function Inbox() {
       />
       
       {/* Coluna 3: Chat da Conversa */}
-      <ChatWindow conversationId={selectedConversation} />
+      <ChatWindow 
+        conversationId={selectedConversation} 
+        onNoteCallbackReady={setOnNoteAddedToConversation}
+      />
       
       {/* Coluna 4: Detalhes do Contato */}
-      <ContactDetails />
+      <ContactDetails onNoteAddedToConversation={onNoteAddedToConversation} />
     </div>
   )
 }

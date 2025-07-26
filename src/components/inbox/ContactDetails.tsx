@@ -69,7 +69,7 @@ const conversationHistory = [
   }
 ]
 
-export function ContactDetails() {
+export function ContactDetails({ onNoteAddedToConversation }: { onNoteAddedToConversation?: (note: { content: string, authorName: string, authorId?: string }) => void }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState(contactData)
   const [newObservation, setNewObservation] = useState("")
@@ -443,7 +443,10 @@ export function ContactDetails() {
         {/* Notas Internas */}
         <Card>
           <CardContent className="p-4">
-            <ContactNotesDisplay contactId={contactData.id} />
+            <ContactNotesDisplay 
+              contactId={contactData.id} 
+              onNoteAddedToConversation={onNoteAddedToConversation}
+            />
           </CardContent>
         </Card>
 

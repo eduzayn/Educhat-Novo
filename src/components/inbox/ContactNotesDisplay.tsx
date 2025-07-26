@@ -10,9 +10,10 @@ import { toast } from "@/hooks/use-toast"
 interface ContactNotesDisplayProps {
   contactId: number
   className?: string
+  onNoteAddedToConversation?: (note: { content: string, authorName: string, authorId?: string }) => void
 }
 
-export function ContactNotesDisplay({ contactId, className }: ContactNotesDisplayProps) {
+export function ContactNotesDisplay({ contactId, className, onNoteAddedToConversation }: ContactNotesDisplayProps) {
   const { notes, isLoading, fetchNotes, updateNote, deleteNote } = useContactNotes(contactId)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editContent, setEditContent] = useState('')
@@ -75,6 +76,7 @@ export function ContactNotesDisplay({ contactId, className }: ContactNotesDispla
         <InternalNoteButton 
           contactId={contactId} 
           onNoteAdded={fetchNotes}
+          onNoteAddedToConversation={onNoteAddedToConversation}
         />
       </div>
 
