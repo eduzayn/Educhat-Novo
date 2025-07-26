@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { format } from "date-fns";
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useElegantToast } from "@/components/ui/elegant-toast";
 import { CRMIntegration } from "@/components/crm/CRMIntegration";
 import { AutomationEngine } from "@/components/crm/AutomationEngine";
@@ -20,7 +23,7 @@ import {
   DollarSign, 
   Target, 
   TrendingUp, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Phone, 
   Mail, 
   MessageSquare,
@@ -37,7 +40,8 @@ import {
   Zap,
   BarChart3,
   Bot,
-  Workflow
+  Workflow,
+  CalendarDays
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
@@ -86,6 +90,10 @@ const CRM = () => {
   const [selectedFunnelId, setSelectedFunnelId] = useState('sales_funnel');
   const [currentUser] = useState({ id: 'user1', name: 'João Silva' }); // Usuário logado
   const [showOnlyMyOpportunities, setShowOnlyMyOpportunities] = useState(false);
+  const [dateFilter, setDateFilter] = useState<{from: Date | undefined; to: Date | undefined}>({
+    from: undefined,
+    to: undefined
+  });
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([
     {
@@ -325,7 +333,24 @@ const CRM = () => {
     const matchesStage = selectedStage === 'all' || opp.stage === selectedStage;
     const matchesUser = !showOnlyMyOpportunities || opp.assignedTo === currentUser.id;
     
-    return matchesFilter && matchesStage && matchesUser;
+    // Filtro por período
+    const matchesDateFilter = (() => {
+      if (!dateFilter.from && !dateFilter.to) return true;
+      
+      const oppDate = new Date(opp.dueDate);
+      
+      if (dateFilter.from && dateFilter.to) {
+        return oppDate >= dateFilter.from && oppDate <= dateFilter.to;
+      } else if (dateFilter.from) {
+        return oppDate >= dateFilter.from;
+      } else if (dateFilter.to) {
+        return oppDate <= dateFilter.to;
+      }
+      
+      return true;
+    })();
+    
+    return matchesFilter && matchesStage && matchesUser && matchesDateFilter;
   });
 
   return (
@@ -572,14 +597,63 @@ const CRM = () => {
           <TabsContent value="kanban" className="h-full">{" "}
             <div className="h-full">
               {/* Filtros */}
-              <div className="flex gap-4 mb-6">
-                <div className="flex-1">
+              <div className="flex gap-4 mb-6 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
                   <Input
                     placeholder="Buscar oportunidades..."
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                     className="max-w-sm"
                   />
+                </div>
+                
+                {/* Filtro de Período */}
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-[200px] justify-start text-left font-normal"
+                      >
+                        <CalendarDays className="h-4 w-4 mr-2" />
+                        {dateFilter.from ? (
+                          dateFilter.to ? (
+                            <>
+                              {format(dateFilter.from, "dd/MM/yy")} -{" "}
+                              {format(dateFilter.to, "dd/MM/yy")}
+                            </>
+                          ) : (
+                            format(dateFilter.from, "dd/MM/yyyy")
+                          )
+                        ) : (
+                          <span>Período</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateFilter.from}
+                        selected={dateFilter}
+                        onSelect={(range) => setDateFilter({
+                          from: range?.from,
+                          to: range?.to
+                        })}
+                        numberOfMonths={2}
+                        className="pointer-events-auto"
+                      />
+                      <div className="p-3 border-t">
+                        <Button
+                          variant="outline"
+                          onClick={() => setDateFilter({ from: undefined, to: undefined })}
+                          className="w-full"
+                        >
+                          Limpar filtro
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 
                 {/* Filtro "Minhas Oportunidades" */}
@@ -717,12 +791,12 @@ const CRM = () => {
                                           </div>
                                         )}
 
-                                        {opportunity.dueDate && (
-                                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                            <Calendar className="h-3 w-3" />
-                                            {new Date(opportunity.dueDate).toLocaleDateString('pt-BR')}
-                                          </div>
-                                        )}
+                                         {opportunity.dueDate && (
+                                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                             <CalendarIcon className="h-3 w-3" />
+                                             {new Date(opportunity.dueDate).toLocaleDateString('pt-BR')}
+                                           </div>
+                                         )}
 
                                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                           <Clock className="h-3 w-3" />
