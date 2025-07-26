@@ -201,11 +201,9 @@ export default function Copilot() {
       {/* Content com Tabs */}
       <div className="p-6">
         <Tabs defaultValue="agent" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="agent">Agente Virtual</TabsTrigger>
             <TabsTrigger value="knowledge">Base de Conhecimento</TabsTrigger>
-            <TabsTrigger value="automations">Automações</TabsTrigger>
-            <TabsTrigger value="keywords">Palavras-chave</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
