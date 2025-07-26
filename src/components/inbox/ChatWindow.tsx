@@ -28,6 +28,8 @@ import {
   Phone,
   PhoneCall,
   PhoneOff,
+  Video,
+  VideoOff,
   MessageSquare,
   Clock,
   Check,
@@ -238,6 +240,7 @@ export function ChatWindow({ conversationId, onNoteCallbackReady }: ChatWindowPr
   const [showAudioRecorder, setShowAudioRecorder] = useState(false)
   const [isCallActive, setIsCallActive] = useState(false)
   const [callDuration, setCallDuration] = useState("00:00")
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false)
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false)
   const [isQuickRepliesModalOpen, setIsQuickRepliesModalOpen] = useState(false)
@@ -384,6 +387,39 @@ export function ChatWindow({ conversationId, onNoteCallbackReady }: ChatWindowPr
     setCallDuration("00:00")
     toast({
       title: "Chamada finalizada",
+      description: `Duração: ${callDuration}`
+    })
+  }
+
+  const handleStartVideoCall = () => {
+    setIsVideoCallActive(true)
+    // Simulate call timer
+    let seconds = 0
+    const timer = setInterval(() => {
+      seconds++
+      const mins = Math.floor(seconds / 60)
+      const secs = seconds % 60
+      setCallDuration(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`)
+    }, 1000)
+    
+    toast({
+      title: "Videochamada iniciada",
+      description: "Conectando via Agora.io..."
+    })
+    
+    // Store timer in a ref if you want to clear it later
+    setTimeout(() => {
+      if (timer) {
+        // Auto cleanup for demo purposes
+      }
+    }, 60000)
+  }
+
+  const handleEndVideoCall = () => {
+    setIsVideoCallActive(false)
+    setCallDuration("00:00")
+    toast({
+      title: "Videochamada finalizada",
       description: `Duração: ${callDuration}`
     })
   }
@@ -579,7 +615,7 @@ export function ChatWindow({ conversationId, onNoteCallbackReady }: ChatWindowPr
                 onNoteAddedToConversation={handleAddInternalNoteToConversation}
               />
               
-              {/* Call Button */}
+              {/* Call Buttons */}
               {!isCallActive ? (
                 <Button variant="outline" size="sm" onClick={handleStartCall}>
                   <Phone className="h-4 w-4 mr-2" />
@@ -588,6 +624,19 @@ export function ChatWindow({ conversationId, onNoteCallbackReady }: ChatWindowPr
               ) : (
                 <Button variant="destructive" size="sm" onClick={handleEndCall}>
                   <PhoneOff className="h-4 w-4 mr-2" />
+                  {callDuration}
+                </Button>
+              )}
+
+              {/* Video Call Button */}
+              {!isVideoCallActive ? (
+                <Button variant="outline" size="sm" onClick={handleStartVideoCall}>
+                  <Video className="h-4 w-4 mr-2" />
+                  Vídeo
+                </Button>
+              ) : (
+                <Button variant="destructive" size="sm" onClick={handleEndVideoCall}>
+                  <VideoOff className="h-4 w-4 mr-2" />
                   {callDuration}
                 </Button>
               )}

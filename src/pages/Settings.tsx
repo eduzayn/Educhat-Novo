@@ -39,7 +39,10 @@ import {
   Phone,
   Building,
   Crown,
-  Ban
+  Ban,
+  Zap,
+  Video,
+  PhoneCall
 } from "lucide-react"
 
 const teams = [
@@ -97,6 +100,14 @@ export default function Settings() {
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<any>(null)
   
+  // Estados para integração Agora.io
+  const [agoraConfig, setAgoraConfig] = useState({
+    appId: "",
+    appCertificate: "",
+    enabled: false,
+    testConnectionLoading: false
+  })
+  
   const elegantToast = useElegantToast()
 
   const tabs = [
@@ -104,6 +115,7 @@ export default function Settings() {
     { id: "users", label: "Usuários", icon: Users },
     { id: "teams", label: "Equipes", icon: Users },
     { id: "channels", label: "Canais", icon: MessageSquare },
+    { id: "integrations", label: "Integrações", icon: Zap },
     { id: "notifications", label: "Notificações", icon: Bell },
     { id: "appearance", label: "Aparência", icon: Palette },
     { id: "security", label: "Segurança", icon: Shield }
@@ -911,6 +923,141 @@ export default function Settings() {
                     <Save className="h-4 w-4 mr-2" />
                     Salvar Outros Canais
                   </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Integrações */}
+          {activeTab === "integrations" && (
+            <div className="space-y-6">
+              {/* Agora.io Integration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Video className="h-5 w-5 mr-2" />
+                    Agora.io - Chamadas de Voz e Vídeo
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Configure a integração com Agora.io para permitir chamadas de voz e vídeo diretamente na caixa de entrada
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Habilitar Agora.io</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Ative para permitir chamadas de voz e vídeo
+                      </p>
+                    </div>
+                    <Switch
+                      checked={agoraConfig.enabled}
+                      onCheckedChange={(checked) =>
+                        setAgoraConfig(prev => ({ ...prev, enabled: checked }))
+                      }
+                    />
+                  </div>
+
+                  {agoraConfig.enabled && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label htmlFor="agora-app-id">App ID</Label>
+                          <Input
+                            id="agora-app-id"
+                            type="text"
+                            placeholder="Digite o App ID do Agora.io"
+                            value={agoraConfig.appId}
+                            onChange={(e) =>
+                              setAgoraConfig(prev => ({ ...prev, appId: e.target.value }))
+                            }
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Encontre seu App ID no console do Agora.io
+                          </p>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="agora-app-certificate">App Certificate</Label>
+                          <Input
+                            id="agora-app-certificate"
+                            type="password"
+                            placeholder="Digite o App Certificate"
+                            value={agoraConfig.appCertificate}
+                            onChange={(e) =>
+                              setAgoraConfig(prev => ({ ...prev, appCertificate: e.target.value }))
+                            }
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Certificado para autenticação segura (opcional para desenvolvimento)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            setAgoraConfig(prev => ({ ...prev, testConnectionLoading: true }))
+                            // Simular teste de conexão
+                            await new Promise(resolve => setTimeout(resolve, 2000))
+                            setAgoraConfig(prev => ({ ...prev, testConnectionLoading: false }))
+                            
+                            if (agoraConfig.appId) {
+                              elegantToast.connected("Agora.io")
+                            } else {
+                              elegantToast.error("Erro na conexão", "Verifique o App ID e tente novamente")
+                            }
+                          }}
+                          disabled={agoraConfig.testConnectionLoading || !agoraConfig.appId}
+                        >
+                          {agoraConfig.testConnectionLoading ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Wifi className="h-4 w-4 mr-2" />
+                          )}
+                          Testar Conexão
+                        </Button>
+
+                        <Button onClick={() => {
+                          elegantToast.success("Configurações salvas", "Configurações do Agora.io foram atualizadas", "save")
+                        }}>
+                          <Save className="h-4 w-4 mr-2" />
+                          Salvar Configurações
+                        </Button>
+                      </div>
+
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium mb-2 flex items-center">
+                          <PhoneCall className="h-4 w-4 mr-2" />
+                          Recursos Disponíveis
+                        </h4>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          <li>• Chamadas de voz em tempo real</li>
+                          <li>• Chamadas de vídeo em HD</li>
+                          <li>• Gravação de chamadas</li>
+                          <li>• Compartilhamento de tela</li>
+                          <li>• Qualidade adaptável baseada na conexão</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Outras integrações futuras */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Outras Integrações</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Mais integrações estarão disponíveis em breve
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Novas integrações em desenvolvimento</p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
