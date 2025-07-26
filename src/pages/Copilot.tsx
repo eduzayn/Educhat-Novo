@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AIAgent } from "@/components/copilot/AIAgent"
+import { KnowledgeBase } from "@/components/copilot/KnowledgeBase"
 import { enhancedAIService } from "@/components/copilot/EnhancedAIService"
 import { toast } from "@/hooks/use-toast"
 import { 
@@ -200,8 +201,9 @@ export default function Copilot() {
       {/* Content com Tabs */}
       <div className="p-6">
         <Tabs defaultValue="agent" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="agent">Agente Virtual</TabsTrigger>
+            <TabsTrigger value="knowledge">Base de Conhecimento</TabsTrigger>
             <TabsTrigger value="automations">Automações</TabsTrigger>
             <TabsTrigger value="keywords">Palavras-chave</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -212,6 +214,10 @@ export default function Copilot() {
               isActive={isAIAgentActive}
               onToggle={handleToggleAIAgent}
             />
+          </TabsContent>
+
+          <TabsContent value="knowledge" className="mt-6">
+            <KnowledgeBase />
           </TabsContent>
 
           <TabsContent value="automations" className="mt-6">
