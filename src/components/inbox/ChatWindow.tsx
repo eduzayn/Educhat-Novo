@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { QuickRepliesModal } from "@/components/modals/QuickRepliesModal"
 import { AudioRecorder } from "@/components/inbox/AudioRecorder"
 import { Button } from "@/components/ui/button"
@@ -119,11 +119,29 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [transferTeam, setTransferTeam] = useState("")
   const [transferUser, setTransferUser] = useState("")
   const [transferNote, setTransferNote] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSendMessage = () => {
     if (message.trim()) {
       // Aqui seria enviada a mensagem
       setMessage("")
+    }
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      const fileName = file.name
+      const fileSize = (file.size / 1024 / 1024).toFixed(2) // MB
+      
+      toast({
+        title: "Arquivo selecionado",
+        description: `${fileName} (${fileSize} MB) pronto para envio.`
+      })
+      
+      // Here you would handle the file upload logic
+      console.log('Selected file:', file)
     }
   }
 
@@ -530,10 +548,20 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
           <div className="flex items-end space-x-2">
             <div className="flex-1">
               <div className="flex items-center space-x-2 border border-border rounded-lg p-2 focus-within:ring-2 focus-within:ring-primary">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                
                 <Button
                   variant="ghost"
                   size="sm"
                   className="p-1"
+                  onClick={() => fileInputRef.current?.click()}
                 >
                   <Paperclip className="h-4 w-4" />
                 </Button>
