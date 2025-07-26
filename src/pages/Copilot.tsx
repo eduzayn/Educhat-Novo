@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AIAgent } from "@/components/copilot/AIAgent"
-import { aiService } from "@/components/copilot/AIService"
+import { enhancedAIService } from "@/components/copilot/EnhancedAIService"
 import { toast } from "@/hooks/use-toast"
 import { 
   Bot, 
@@ -113,6 +113,20 @@ export default function Copilot() {
         enabled: false,
         apiKey: localStorage.getItem('anthropic_api_key') || '',
         model: 'claude-sonnet-4-20250514'
+      },
+      elevenlabs: {
+        enabled: false,
+        apiKey: localStorage.getItem('elevenlabs_api_key') || '',
+        voiceId: '9BWtsMINqrJLrRacOk9x', // Aria voice
+        model: 'eleven_multilingual_v2'
+      },
+      whisper: {
+        enabled: false,
+        model: 'whisper-1'
+      },
+      firecrawl: {
+        enabled: false,
+        apiKey: localStorage.getItem('firecrawl_api_key') || ''
       }
     }
   })
@@ -124,10 +138,10 @@ export default function Copilot() {
   const handleToggleAIAgent = (active: boolean) => {
     setIsAIAgentActive(active)
     if (active) {
-      aiService.updateConfig(settings.aiIntegrations)
+      enhancedAIService.updateConfig(settings.aiIntegrations)
       toast({
         title: "Agente Virtual Ativado",
-        description: "O sistema ZAIA está monitorando conversas e respondendo automaticamente."
+        description: "O sistema ZAIA está monitorando conversas com recursos multimodais."
       })
     } else {
       toast({
@@ -228,14 +242,25 @@ export default function Copilot() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Brain className="h-5 w-5 mr-2" />
-                    Configurações de IA
+                    Configurações Multimodais de IA
                   </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Configure todas as integrações para um atendimento completo com áudio, imagem e documentos
+                  </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   {/* OpenAI */}
                   <div className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium">OpenAI GPT</h4>
+                      <div>
+                        <h4 className="font-medium flex items-center">
+                          <div className="w-6 h-6 bg-green-100 rounded mr-2 flex items-center justify-center">
+                            <span className="text-xs font-bold text-green-700">AI</span>
+                          </div>
+                          OpenAI GPT + Vision + Whisper
+                        </h4>
+                        <p className="text-xs text-muted-foreground">Chat, análise de imagens e transcrição de áudio</p>
+                      </div>
                       <Switch 
                         checked={settings.aiIntegrations.openai.enabled}
                         onCheckedChange={(checked) => handleAIIntegrationChange('openai', 'enabled', checked)}
@@ -243,12 +268,122 @@ export default function Copilot() {
                     </div>
                     {settings.aiIntegrations.openai.enabled && (
                       <div className="space-y-3">
-                        <Input
-                          type="password"
-                          placeholder="API Key"
-                          value={settings.aiIntegrations.openai.apiKey}
-                          onChange={(e) => handleAIIntegrationChange('openai', 'apiKey', e.target.value)}
-                        />
+                        <div>
+                          <Label className="text-sm">API Key</Label>
+                          <div className="relative">
+                            <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="password"
+                              placeholder="sk-..."
+                              value={settings.aiIntegrations.openai.apiKey}
+                              onChange={(e) => handleAIIntegrationChange('openai', 'apiKey', e.target.value)}
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm">Modelo</Label>
+                          <Select 
+                            value={settings.aiIntegrations.openai.model}
+                            onValueChange={(value) => handleAIIntegrationChange('openai', 'model', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (2025) - Recomendado</SelectItem>
+                              <SelectItem value="o3-2025-04-16">O3 (2025) - Raciocínio Avançado</SelectItem>
+                              <SelectItem value="o4-mini-2025-04-16">O4 Mini - Rápido</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ElevenLabs */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-medium flex items-center">
+                          <div className="w-6 h-6 bg-orange-100 rounded mr-2 flex items-center justify-center">
+                            <span className="text-xs font-bold text-orange-700">🎤</span>
+                          </div>
+                          ElevenLabs Text-to-Speech
+                        </h4>
+                        <p className="text-xs text-muted-foreground">Gerar respostas em áudio natural</p>
+                      </div>
+                      <Switch 
+                        checked={settings.aiIntegrations.elevenlabs.enabled}
+                        onCheckedChange={(checked) => handleAIIntegrationChange('elevenlabs', 'enabled', checked)}
+                      />
+                    </div>
+                    {settings.aiIntegrations.elevenlabs.enabled && (
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm">API Key</Label>
+                          <div className="relative">
+                            <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="password"
+                              placeholder="sk_..."
+                              value={settings.aiIntegrations.elevenlabs.apiKey}
+                              onChange={(e) => handleAIIntegrationChange('elevenlabs', 'apiKey', e.target.value)}
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm">Voz</Label>
+                          <Select 
+                            value={settings.aiIntegrations.elevenlabs.voiceId}
+                            onValueChange={(value) => handleAIIntegrationChange('elevenlabs', 'voiceId', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="9BWtsMINqrJLrRacOk9x">Aria (Feminina)</SelectItem>
+                              <SelectItem value="CwhRBWXzGAHq8TQ4Fs17">Roger (Masculina)</SelectItem>
+                              <SelectItem value="EXAVITQu4vr4xnSDxMaL">Sarah (Feminina)</SelectItem>
+                              <SelectItem value="JBFqnCBsd6RMkjVDRZzb">George (Masculina)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Firecrawl */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-medium flex items-center">
+                          <div className="w-6 h-6 bg-purple-100 rounded mr-2 flex items-center justify-center">
+                            <span className="text-xs font-bold text-purple-700">📄</span>
+                          </div>
+                          Firecrawl Document Reader
+                        </h4>
+                        <p className="text-xs text-muted-foreground">Ler e processar documentos/sites automaticamente</p>
+                      </div>
+                      <Switch 
+                        checked={settings.aiIntegrations.firecrawl.enabled}
+                        onCheckedChange={(checked) => handleAIIntegrationChange('firecrawl', 'enabled', checked)}
+                      />
+                    </div>
+                    {settings.aiIntegrations.firecrawl.enabled && (
+                      <div>
+                        <Label className="text-sm">API Key</Label>
+                        <div className="relative">
+                          <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="password"
+                            placeholder="fc-..."
+                            value={settings.aiIntegrations.firecrawl.apiKey}
+                            onChange={(e) => handleAIIntegrationChange('firecrawl', 'apiKey', e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
