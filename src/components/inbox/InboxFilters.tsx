@@ -78,7 +78,7 @@ export function InboxFilters() {
 
   const formatDateRange = () => {
     if (!dateRange?.from) return "Selecionar período"
-    if (!dateRange.to) return format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+    if (!dateRange?.to) return format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
     return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`
   }
 
