@@ -619,7 +619,7 @@ const CRM = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="kanban" className="h-full">{" "}
+          <TabsContent value="kanban" className="h-full mt-6">{" "}
             <div className="h-full">
               {/* Filtros */}
               <div className="flex gap-4 mb-6 flex-wrap">
@@ -879,23 +879,23 @@ const CRM = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="goals" className="h-full">
+          <TabsContent value="goals" className="h-full mt-6">
             <GoalsSystem />
           </TabsContent>
 
-          <TabsContent value="funnels" className="h-full">
+          <TabsContent value="funnels" className="h-full mt-6">
             <MultipleFunnels onFunnelChange={handleFunnelChange} />
           </TabsContent>
 
-          <TabsContent value="integration" className="h-full">
+          <TabsContent value="integration" className="h-full mt-6">
             <CRMIntegration />
           </TabsContent>
 
-          <TabsContent value="automation" className="h-full">
+          <TabsContent value="automation" className="h-full mt-6">
             <AutomationEngine />
           </TabsContent>
 
-          <TabsContent value="analytics" className="h-full">{" "}
+          <TabsContent value="analytics" className="h-full mt-6">{" "}
             <AdvancedAnalytics />
           </TabsContent>
         </Tabs>
