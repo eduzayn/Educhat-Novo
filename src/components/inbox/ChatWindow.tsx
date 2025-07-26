@@ -322,6 +322,13 @@ export function ChatWindow({ conversationId, onNoteCallbackReady }: ChatWindowPr
 
   // Função para adicionar nota interna como mensagem na conversa
   const handleAddInternalNoteToConversation = (noteData: { content: string, authorName: string, authorId?: string }) => {
+    console.log('handleAddInternalNoteToConversation called with:', noteData)
+    
+    if (!noteData || !noteData.content) {
+      console.error('Invalid noteData received:', noteData)
+      return
+    }
+    
     const now = new Date()
     const timestamp = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     const date = now.toISOString().split('T')[0]

@@ -6,7 +6,7 @@ import { ContactDetails } from "@/components/inbox/ContactDetails"
 
 export default function Inbox() {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
-  const [onNoteAddedToConversation, setOnNoteAddedToConversation] = useState<((note: { content: string, authorName: string, authorId?: string }) => void) | null>(null)
+  const [onNoteAddedToConversation, setOnNoteAddedToConversation] = useState<((note: { content: string, authorName: string, authorId?: string }) => void) | undefined>(undefined)
 
   return (
     <div className="h-screen flex bg-background overflow-hidden">

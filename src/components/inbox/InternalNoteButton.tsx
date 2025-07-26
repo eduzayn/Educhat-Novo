@@ -50,11 +50,13 @@ export function InternalNoteButton({ contactId, onNoteAdded, onNoteAddedToConver
         onNoteAdded?.()
         
         // Callback para adicionar nota como mensagem na conversa
-        onNoteAddedToConversation?.({
-          content: noteContent.trim(),
-          authorName: user?.displayName || 'Atendente',
-          authorId: user?.id
-        })
+        if (onNoteAddedToConversation) {
+          onNoteAddedToConversation({
+            content: noteContent.trim(),
+            authorName: user?.displayName || 'Atendente',
+            authorId: user?.id
+          })
+        }
         
         toast({
           title: "Nota interna adicionada",
