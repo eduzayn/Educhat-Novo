@@ -211,6 +211,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [callDuration, setCallDuration] = useState("00:00")
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false)
+  const [isQuickRepliesModalOpen, setIsQuickRepliesModalOpen] = useState(false)
   const [transferType, setTransferType] = useState("team")
   const [transferTeam, setTransferTeam] = useState("")
   const [transferUser, setTransferUser] = useState("")
@@ -270,6 +271,24 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
       e.preventDefault()
       handleSendMessage()
     }
+  }
+
+  // Função para detectar comandos de respostas rápidas
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setMessage(value)
+    
+    // Detectar se o usuário digitou "/" ou "\" para abrir respostas rápidas
+    if (value === "/" || value === "\\") {
+      setIsQuickRepliesModalOpen(true)
+      setMessage("") // Limpar o campo após abrir o modal
+    }
+  }
+
+  // Função para lidar com a seleção de resposta rápida
+  const handleQuickReplySelect = (reply: { content: string }) => {
+    setMessage(reply.content)
+    setIsQuickRepliesModalOpen(false)
   }
 
   const handleStartCall = () => {
@@ -743,7 +762,14 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                 + Mais
               </Button>
             }
-            onSelectReply={(reply) => setMessage(reply.content)}
+            onSelectReply={handleQuickReplySelect}
+          />
+          
+          {/* Modal separado para acionamento por barra */}
+          <QuickRepliesModal
+            open={isQuickRepliesModalOpen}
+            onOpenChange={setIsQuickRepliesModalOpen}
+            onSelectReply={handleQuickReplySelect}
           />
         </div>
       </div>
@@ -784,9 +810,9 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                 
                 <Input
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={handleMessageChange}
                   onKeyPress={handleKeyPress}
-                  placeholder="Digite sua mensagem..."
+                  placeholder="Digite sua mensagem... (use / para respostas rápidas)"
                   className="border-0 focus:ring-0 focus-visible:ring-0 p-0"
                 />
                 

@@ -60,10 +60,14 @@ const categories = ["Saudações", "Vendas", "Suporte", "Informações", "Desped
 interface QuickRepliesModalProps {
   trigger?: React.ReactNode
   onSelectReply?: (reply: QuickReply) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function QuickRepliesModal({ trigger, onSelectReply }: QuickRepliesModalProps) {
-  const [open, setOpen] = useState(false)
+export function QuickRepliesModal({ trigger, onSelectReply, open: externalOpen, onOpenChange }: QuickRepliesModalProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = onOpenChange || setInternalOpen
   const [quickReplies, setQuickReplies] = useState<QuickReply[]>(initialQuickReplies)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -144,14 +148,11 @@ export function QuickRepliesModal({ trigger, onSelectReply }: QuickRepliesModalP
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Respostas Rápidas
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
       
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
