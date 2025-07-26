@@ -46,7 +46,7 @@ export default function Login() {
       
       // Mock de validação (substituir por integração real)
       const validUsers = [
-        { email: "admin@educhat.com", password: "123456", name: "João Silva", role: "admin", team: "Administração" },
+        { email: "admin@educhat.com", password: "Zayn@123", name: "João Silva", role: "admin", team: "Administração" },
         { email: "vendas@educhat.com", password: "123456", name: "Ana Costa", role: "vendas", team: "Vendas" },
         { email: "suporte@educhat.com", password: "123456", name: "Pedro Santos", role: "suporte", team: "Suporte" }
       ]
@@ -253,7 +253,7 @@ export default function Login() {
                 <Shield className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <div className="text-sm text-muted-foreground">
                   <p className="font-medium">Credenciais de teste:</p>
-                  <p>• admin@educhat.com / 123456</p>
+                  <p>• admin@educhat.com / Zayn@123</p>
                   <p>• vendas@educhat.com / 123456</p>
                   <p>• suporte@educhat.com / 123456</p>
                 </div>
