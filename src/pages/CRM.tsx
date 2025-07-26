@@ -159,7 +159,8 @@ const CRM = () => {
     source: '',
     tags: '',
     assignedTo: '',
-    assignedToName: ''
+    assignedToName: '',
+    funnelId: 'sales_funnel' // Funil padrão
   });
 
   const [filter, setFilter] = useState('');
@@ -259,7 +260,7 @@ const CRM = () => {
     setNewOpportunity({
       title: '', company: '', contact: '', value: '', probability: '',
       stage: 'qualification', dueDate: '', description: '', source: '', tags: '',
-      assignedTo: '', assignedToName: ''
+      assignedTo: '', assignedToName: '', funnelId: 'sales_funnel'
     });
     setIsNewOpportunityOpen(false);
 
@@ -383,6 +384,24 @@ const CRM = () => {
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
+                  {/* Seletor de Funil */}
+                  <div>
+                    <Label htmlFor="funnel">Funil *</Label>
+                    <Select value={newOpportunity.funnelId} onValueChange={(value) => setNewOpportunity(prev => ({...prev, funnelId: value}))}>
+                      <SelectTrigger>
+                        <Target className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Selecione o funil" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableFunnels.map(funnel => (
+                          <SelectItem key={funnel.id} value={funnel.id}>
+                            {funnel.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="title">Título *</Label>
