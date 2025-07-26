@@ -40,6 +40,7 @@ import {
   Workflow
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 
 interface Opportunity {
   id: string;
@@ -54,6 +55,8 @@ interface Opportunity {
   lastActivity: string;
   source: string;
   tags: string[];
+  assignedTo: string; // Responsável pela oportunidade
+  assignedToName: string; // Nome do responsável
 }
 
 interface Stage {
@@ -81,6 +84,8 @@ const CRM = () => {
     { id: 'financial_funnel', name: 'Financeiro - Padrão', departmentId: 'financial' }
   ]);
   const [selectedFunnelId, setSelectedFunnelId] = useState('sales_funnel');
+  const [currentUser] = useState({ id: 'user1', name: 'João Silva' }); // Usuário logado
+  const [showOnlyMyOpportunities, setShowOnlyMyOpportunities] = useState(false);
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([
     {
@@ -95,7 +100,9 @@ const CRM = () => {
       description: 'Sistema completo de automação residencial para casa de alto padrão',
       lastActivity: '2 horas atrás',
       source: 'WhatsApp',
-      tags: ['Urgente', 'VIP']
+      tags: ['Urgente', 'VIP'],
+      assignedTo: 'user1',
+      assignedToName: 'João Silva'
     },
     {
       id: '2',
@@ -109,7 +116,9 @@ const CRM = () => {
       description: 'Implementação de sistema empresarial completo',
       lastActivity: '1 dia atrás',
       source: 'E-mail',
-      tags: ['Corporativo']
+      tags: ['Corporativo'],
+      assignedTo: 'user2',
+      assignedToName: 'Maria Costa'
     },
     {
       id: '3',
@@ -123,7 +132,9 @@ const CRM = () => {
       description: 'Atualização e melhorias no sistema existente',
       lastActivity: '3 horas atrás',
       source: 'Telefone',
-      tags: ['Cliente Existente']
+      tags: ['Cliente Existente'],
+      assignedTo: 'user1',
+      assignedToName: 'João Silva'
     }
   ]);
 
@@ -138,7 +149,9 @@ const CRM = () => {
     dueDate: '',
     description: '',
     source: '',
-    tags: ''
+    tags: '',
+    assignedTo: '',
+    assignedToName: ''
   });
 
   const [filter, setFilter] = useState('');
@@ -229,13 +242,16 @@ const CRM = () => {
       description: newOpportunity.description,
       lastActivity: 'Agora',
       source: newOpportunity.source,
-      tags: newOpportunity.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+      tags: newOpportunity.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      assignedTo: newOpportunity.assignedTo || currentUser.id,
+      assignedToName: newOpportunity.assignedToName || currentUser.name
     };
 
     setOpportunities(prev => [...prev, opportunity]);
     setNewOpportunity({
       title: '', company: '', contact: '', value: '', probability: '',
-      stage: 'qualification', dueDate: '', description: '', source: '', tags: ''
+      stage: 'qualification', dueDate: '', description: '', source: '', tags: '',
+      assignedTo: '', assignedToName: ''
     });
     setIsNewOpportunityOpen(false);
 
@@ -307,8 +323,9 @@ const CRM = () => {
       opp.company.toLowerCase().includes(filter.toLowerCase());
     
     const matchesStage = selectedStage === 'all' || opp.stage === selectedStage;
+    const matchesUser = !showOnlyMyOpportunities || opp.assignedTo === currentUser.id;
     
-    return matchesFilter && matchesStage;
+    return matchesFilter && matchesStage && matchesUser;
   });
 
   return (
@@ -569,6 +586,18 @@ const CRM = () => {
                   />
                 </div>
                 
+                {/* Filtro "Minhas Oportunidades" */}
+                <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
+                  <Switch
+                    id="my-opportunities"
+                    checked={showOnlyMyOpportunities}
+                    onCheckedChange={setShowOnlyMyOpportunities}
+                  />
+                  <Label htmlFor="my-opportunities" className="text-sm font-medium">
+                    Minhas Oportunidades
+                  </Label>
+                </div>
+                
                 {/* Seletor de Funil */}
                 <Select value={selectedFunnelId} onValueChange={handleFunnelSelect}>
                   <SelectTrigger className="w-64">
@@ -608,7 +637,7 @@ const CRM = () => {
                           <div className={`w-3 h-3 rounded-full ${stage.color}`} />
                           <h3 className="font-semibold text-foreground">{stage.name}</h3>
                           <Badge variant="secondary" className="ml-auto">
-                            {getOpportunitiesByStage(stage.id).length}
+                            {filteredOpportunities.filter(opp => opp.stage === stage.id).length}
                           </Badge>
                         </div>
 
@@ -621,7 +650,7 @@ const CRM = () => {
                                 snapshot.isDraggingOver ? 'bg-muted/50' : 'bg-muted/20'
                               }`}
                             >
-                              {getOpportunitiesByStage(stage.id).map((opportunity, index) => (
+                              {filteredOpportunities.filter(opp => opp.stage === stage.id).map((opportunity, index) => (
                                 <Draggable key={opportunity.id} draggableId={opportunity.id} index={index}>
                                   {(provided, snapshot) => (
                                     <Card
