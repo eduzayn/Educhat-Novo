@@ -5,6 +5,13 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 import { 
   Search, 
   Plus, 
@@ -15,7 +22,13 @@ import {
   MessageSquare,
   MoreVertical,
   Edit,
-  Trash2
+  Trash2,
+  Copy,
+  Archive,
+  Star,
+  Tag,
+  X,
+  Save
 } from "lucide-react"
 
 // Mock data para contatos
@@ -55,12 +68,105 @@ const contacts = [
 export default function Contacts() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedContacts, setSelectedContacts] = useState<number[]>([])
+  const [contactsList, setContactsList] = useState(contacts)
+  const [editingContact, setEditingContact] = useState<any>(null)
+  const [deletingContact, setDeletingContact] = useState<any>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const { toast } = useToast()
 
-  const filteredContacts = contacts.filter(contact =>
+  const filteredContacts = contactsList.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.phone.includes(searchTerm)
   )
+
+  // Função para iniciar uma conversa
+  const handleStartConversation = (contact: any) => {
+    toast({
+      title: "Conversa iniciada",
+      description: `Iniciando conversa com ${contact.name} via ${contact.channel}`
+    })
+    // Aqui redirecionaria para a página de inbox com a conversa
+    console.log("Iniciando conversa com:", contact)
+  }
+
+  // Função para editar contato
+  const handleEditContact = (contact: any) => {
+    setEditingContact({
+      ...contact,
+      company: "", // Adicionar campos que podem estar faltando
+      assignedUser: "",
+      observations: ""
+    })
+    setIsEditModalOpen(true)
+  }
+
+  // Função para salvar edição do contato
+  const handleSaveEdit = () => {
+    if (!editingContact.name.trim()) {
+      toast({ title: "Nome é obrigatório", variant: "destructive" })
+      return
+    }
+
+    setContactsList(prev => prev.map(contact => 
+      contact.id === editingContact.id ? editingContact : contact
+    ))
+    
+    toast({ title: "Contato atualizado com sucesso!" })
+    setIsEditModalOpen(false)
+    setEditingContact(null)
+  }
+
+  // Função para confirmar exclusão
+  const handleDeleteContact = (contact: any) => {
+    setDeletingContact(contact)
+    setIsDeleteDialogOpen(true)
+  }
+
+  // Função para excluir contato
+  const confirmDeleteContact = () => {
+    setContactsList(prev => prev.filter(contact => contact.id !== deletingContact.id))
+    toast({ 
+      title: "Contato excluído", 
+      description: `${deletingContact.name} foi removido dos seus contatos`
+    })
+    setIsDeleteDialogOpen(false)
+    setDeletingContact(null)
+  }
+
+  // Função para duplicar contato
+  const handleDuplicateContact = (contact: any) => {
+    const newContact = {
+      ...contact,
+      id: Math.max(...contactsList.map(c => c.id)) + 1,
+      name: `${contact.name} (Cópia)`,
+      phone: "", // Limpar telefone para evitar duplicata
+      email: "" // Limpar email para evitar duplicata
+    }
+    setContactsList(prev => [...prev, newContact])
+    toast({ title: "Contato duplicado com sucesso!" })
+  }
+
+  // Função para arquivar contato
+  const handleArchiveContact = (contact: any) => {
+    toast({ 
+      title: "Contato arquivado", 
+      description: `${contact.name} foi arquivado` 
+    })
+    // Aqui implementaria a lógica de arquivamento
+    console.log("Arquivando contato:", contact)
+  }
+
+  // Função para favoritar contato
+  const handleFavoriteContact = (contact: any) => {
+    toast({ 
+      title: "Contato favoritado", 
+      description: `${contact.name} foi adicionado aos favoritos` 
+    })
+    // Aqui implementaria a lógica de favoritos
+    console.log("Favoritando contato:", contact)
+  }
 
   return (
     <div className="h-screen bg-background">
@@ -80,8 +186,14 @@ export default function Contacts() {
             
             <NewContactModal 
               onSave={(contactData) => {
-                console.log("Novo contato salvo:", contactData)
-                // Aqui adicionaria à lista de contatos
+                const newContact = {
+                  ...contactData,
+                  id: Math.max(...contactsList.map(c => c.id)) + 1,
+                  channel: contactData.selectedChannel ? "WhatsApp" : "Manual",
+                  lastContact: "Agora"
+                }
+                setContactsList(prev => [...prev, newContact])
+                toast({ title: "Contato criado com sucesso!" })
               }}
             />
           </div>
@@ -98,7 +210,7 @@ export default function Contacts() {
               />
             </div>
             
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => toast({ title: "Filtros em desenvolvimento" })}>
               <Filter className="h-4 w-4 mr-2" />
               Filtros
             </Button>
@@ -113,7 +225,7 @@ export default function Contacts() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold text-foreground">{contacts.length}</p>
+                <p className="text-2xl font-bold text-foreground">{contactsList.length}</p>
               </div>
               <Users className="h-8 w-8 text-primary" />
             </div>
@@ -126,7 +238,7 @@ export default function Contacts() {
               <div>
                 <p className="text-sm text-muted-foreground">WhatsApp</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {contacts.filter(c => c.channel === "WhatsApp").length}
+                  {contactsList.filter(c => c.channel === "WhatsApp").length}
                 </p>
               </div>
               <MessageSquare className="h-8 w-8 text-success" />
@@ -140,7 +252,7 @@ export default function Contacts() {
               <div>
                 <p className="text-sm text-muted-foreground">E-mail</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {contacts.filter(c => c.channel === "E-mail").length}
+                  {contactsList.filter(c => c.channel === "E-mail").length}
                 </p>
               </div>
               <Mail className="h-8 w-8 text-primary" />
@@ -154,7 +266,7 @@ export default function Contacts() {
               <div>
                 <p className="text-sm text-muted-foreground">Instagram</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {contacts.filter(c => c.channel === "Instagram").length}
+                  {contactsList.filter(c => c.channel === "Instagram").length}
                 </p>
               </div>
               <div className="h-8 w-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg" />
@@ -218,21 +330,56 @@ export default function Contacts() {
                         </div>
                         
                         <div className="flex items-center space-x-1">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleStartConversation(contact)}
+                            title="Iniciar conversa"
+                          >
                             <MessageSquare className="h-4 w-4" />
                           </Button>
                           
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleEditContact(contact)}
+                            title="Editar contato"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           
-                          <Button variant="ghost" size="sm" className="text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive" 
+                            onClick={() => handleDeleteContact(contact)}
+                            title="Excluir contato"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                           
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" title="Mais opções">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleDuplicateContact(contact)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Duplicar contato
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleFavoriteContact(contact)}>
+                                <Star className="h-4 w-4 mr-2" />
+                                Adicionar aos favoritos
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleArchiveContact(contact)}>
+                                <Archive className="h-4 w-4 mr-2" />
+                                Arquivar contato
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
@@ -255,6 +402,126 @@ export default function Contacts() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Edição */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2" />
+              Editar Contato
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingContact && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nome Completo *</Label>
+                  <Input
+                    id="edit-name"
+                    value={editingContact.name}
+                    onChange={(e) => setEditingContact({...editingContact, name: e.target.value})}
+                    placeholder="Nome do contato"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-company">Empresa</Label>
+                  <Input
+                    id="edit-company"
+                    value={editingContact.company || ""}
+                    onChange={(e) => setEditingContact({...editingContact, company: e.target.value})}
+                    placeholder="Nome da empresa"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Telefone</Label>
+                  <Input
+                    id="edit-phone"
+                    value={editingContact.phone}
+                    onChange={(e) => setEditingContact({...editingContact, phone: e.target.value})}
+                    placeholder="+55 11 99999-9999"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">E-mail</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editingContact.email}
+                    onChange={(e) => setEditingContact({...editingContact, email: e.target.value})}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-channel">Canal Preferencial</Label>
+                <Select value={editingContact.channel} onValueChange={(value) => setEditingContact({...editingContact, channel: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="Facebook">Facebook</SelectItem>
+                    <SelectItem value="E-mail">E-mail</SelectItem>
+                    <SelectItem value="Telefone">Telefone</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-observations">Observações</Label>
+                <Textarea
+                  id="edit-observations"
+                  value={editingContact.observations || ""}
+                  onChange={(e) => setEditingContact({...editingContact, observations: e.target.value})}
+                  placeholder="Observações sobre o contato..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o contato <strong>{deletingContact?.name}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteContact}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
