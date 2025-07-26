@@ -225,7 +225,6 @@ export function AIAgent({ isActive, onToggle }: AIAgentProps) {
               <Switch 
                 checked={agentConfig.sdr.active}
                 onCheckedChange={() => handleToggleAgent('sdr')}
-                size="sm"
               />
             </div>
             <p className="text-xs text-muted-foreground">
@@ -261,7 +260,6 @@ export function AIAgent({ isActive, onToggle }: AIAgentProps) {
               <Switch 
                 checked={agentConfig.closer.active}
                 onCheckedChange={() => handleToggleAgent('closer')}
-                size="sm"
               />
             </div>
             <p className="text-xs text-muted-foreground">
@@ -297,7 +295,6 @@ export function AIAgent({ isActive, onToggle }: AIAgentProps) {
               <Switch 
                 checked={agentConfig.support.active}
                 onCheckedChange={() => handleToggleAgent('support')}
-                size="sm"
               />
             </div>
             <p className="text-xs text-muted-foreground">
