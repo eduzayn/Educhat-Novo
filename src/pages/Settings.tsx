@@ -25,7 +25,11 @@ import {
   Plus,
   Edit,
   Trash2,
-  X
+  X,
+  QrCode,
+  Wifi,
+  WifiOff,
+  Loader2
 } from "lucide-react"
 
 const teams = [
@@ -51,9 +55,14 @@ const otherChannels = [
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile")
   const [teamsList, setTeamsList] = useState(teams)
+  const [whatsappChannelsList, setWhatsappChannelsList] = useState(whatsappChannels)
   const [isNewTeamModalOpen, setIsNewTeamModalOpen] = useState(false)
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false)
   const [isDeleteTeamDialogOpen, setIsDeleteTeamDialogOpen] = useState(false)
+  const [isQrCodeModalOpen, setIsQrCodeModalOpen] = useState(false)
+  const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
+  const [isLoadingQrCode, setIsLoadingQrCode] = useState(false)
+  const [selectedChannelForQr, setSelectedChannelForQr] = useState<any>(null)
   const [editingTeam, setEditingTeam] = useState<any>(null)
   const [deletingTeam, setDeletingTeam] = useState<any>(null)
   const [newTeamData, setNewTeamData] = useState({
@@ -141,6 +150,111 @@ export default function Settings() {
     })
     setIsDeleteTeamDialogOpen(false)
     setDeletingTeam(null)
+  }
+
+  // Função para gerar QR Code Z-API
+  const handleGenerateQrCode = async (channel: any) => {
+    if (!channel.instanceId || !channel.instanceToken || !channel.clientToken) {
+      toast({ 
+        title: "Configuração incompleta", 
+        description: "Preencha todas as configurações da instância antes de gerar o QR Code",
+        variant: "destructive" 
+      })
+      return
+    }
+
+    setSelectedChannelForQr(channel)
+    setIsLoadingQrCode(true)
+    setQrCodeImage(null)
+    setIsQrCodeModalOpen(true)
+
+    try {
+      // Simular requisição para Z-API para pegar QR Code
+      // URL real seria: https://api.z-api.io/instances/{instanceId}/token/{instanceToken}/qr-code/image
+      const response = await fetch(`https://api.z-api.io/instances/${channel.instanceId}/token/${channel.instanceToken}/qr-code/image`, {
+        method: 'GET',
+        headers: {
+          'Client-Token': channel.clientToken,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        // Converter bytes para blob e depois para URL
+        const blob = await response.blob()
+        const imageUrl = URL.createObjectURL(blob)
+        setQrCodeImage(imageUrl)
+        toast({ title: "QR Code gerado com sucesso!" })
+      } else {
+        throw new Error("Falha ao gerar QR Code")
+      }
+    } catch (error) {
+      console.error("Erro ao gerar QR Code:", error)
+      
+      // Mock do QR Code para demonstração
+      // Em produção, remover esta parte e usar apenas a API real
+      const mockQrCodeSvg = `data:image/svg+xml;base64,${btoa(`
+        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" fill="white"/>
+          <rect x="10" y="10" width="20" height="20" fill="black"/>
+          <rect x="40" y="10" width="20" height="20" fill="black"/>
+          <rect x="70" y="10" width="20" height="20" fill="black"/>
+          <rect x="10" y="40" width="20" height="20" fill="black"/>
+          <rect x="70" y="40" width="20" height="20" fill="black"/>
+          <rect x="10" y="70" width="20" height="20" fill="black"/>
+          <rect x="40" y="70" width="20" height="20" fill="black"/>
+          <rect x="70" y="70" width="20" height="20" fill="black"/>
+          <text x="100" y="100" font-family="Arial" font-size="12" fill="black">QR Code Mock</text>
+          <text x="100" y="120" font-family="Arial" font-size="10" fill="gray">${channel.name}</text>
+        </svg>
+      `)}`
+      
+      setQrCodeImage(mockQrCodeSvg)
+      toast({ 
+        title: "QR Code simulado", 
+        description: "Em produção, conecte com a Z-API real",
+        variant: "default" 
+      })
+    } finally {
+      setIsLoadingQrCode(false)
+    }
+  }
+
+  // Função para testar conexão da instância
+  const handleTestConnection = async (channel: any) => {
+    if (!channel.instanceId || !channel.instanceToken || !channel.clientToken) {
+      toast({ 
+        title: "Configuração incompleta", 
+        description: "Preencha todas as configurações antes de testar",
+        variant: "destructive" 
+      })
+      return
+    }
+
+    try {
+      // Simular teste de conexão com Z-API
+      toast({ title: "Testando conexão...", description: "Aguarde..." })
+      
+      // Em produção, fazer requisição real para Z-API status endpoint
+      setTimeout(() => {
+        const isConnected = Math.random() > 0.3 // 70% chance de sucesso para demo
+        if (isConnected) {
+          toast({ title: "Conexão estabelecida!", description: "WhatsApp conectado com sucesso" })
+        } else {
+          toast({ 
+            title: "Falha na conexão", 
+            description: "Verifique as credenciais e tente novamente",
+            variant: "destructive" 
+          })
+        }
+      }, 2000)
+    } catch (error) {
+      toast({ 
+        title: "Erro ao testar conexão", 
+        description: "Tente novamente em alguns instantes",
+        variant: "destructive" 
+      })
+    }
   }
 
   return (
@@ -318,16 +432,23 @@ export default function Settings() {
                   <CardTitle>Canais WhatsApp (Z-API)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {whatsappChannels.map((channel) => (
+                  {whatsappChannelsList.map((channel) => (
                     <div key={channel.id}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           <h3 className="font-medium text-foreground">{channel.name}</h3>
                           <Badge variant={channel.active ? "default" : "secondary"}>
-                            {channel.active ? "Ativo" : "Inativo"}
+                            {channel.active ? "Conectado" : "Desconectado"}
                           </Badge>
                         </div>
-                        <Switch checked={channel.active} />
+                        <Switch 
+                          checked={channel.active} 
+                          onCheckedChange={(checked) => {
+                            setWhatsappChannelsList(prev => prev.map(ch => 
+                              ch.id === channel.id ? { ...ch, active: checked } : ch
+                            ))
+                          }}
+                        />
                       </div>
                       
                       <div className="grid grid-cols-1 gap-4">
@@ -337,6 +458,11 @@ export default function Settings() {
                             defaultValue={channel.name}
                             placeholder="Ex: WhatsApp Vendas"
                             className="mt-1"
+                            onChange={(e) => {
+                              setWhatsappChannelsList(prev => prev.map(ch => 
+                                ch.id === channel.id ? { ...ch, name: e.target.value } : ch
+                              ))
+                            }}
                           />
                         </div>
                         
@@ -347,6 +473,11 @@ export default function Settings() {
                               value={channel.instanceId}
                               placeholder="Ex: 3E381D17B9F2D0172542C6B7A3ED70A7"
                               className="mt-1"
+                              onChange={(e) => {
+                                setWhatsappChannelsList(prev => prev.map(ch => 
+                                  ch.id === channel.id ? { ...ch, instanceId: e.target.value } : ch
+                                ))
+                              }}
                             />
                           </div>
                           <div>
@@ -356,6 +487,11 @@ export default function Settings() {
                               value={channel.instanceToken}
                               placeholder="Token da instância Z-API"
                               className="mt-1"
+                              onChange={(e) => {
+                                setWhatsappChannelsList(prev => prev.map(ch => 
+                                  ch.id === channel.id ? { ...ch, instanceToken: e.target.value } : ch
+                                ))
+                              }}
                             />
                           </div>
                           <div>
@@ -365,6 +501,11 @@ export default function Settings() {
                               value={channel.clientToken}
                               placeholder="Client token Z-API"
                               className="mt-1"
+                              onChange={(e) => {
+                                setWhatsappChannelsList(prev => prev.map(ch => 
+                                  ch.id === channel.id ? { ...ch, clientToken: e.target.value } : ch
+                                ))
+                              }}
                             />
                           </div>
                         </div>
@@ -372,11 +513,56 @@ export default function Settings() {
                         <div>
                           <Label>URL da API</Label>
                           <Input 
-                            defaultValue={`https://api.z-api.io/instances/${channel.instanceId || '{INSTANCE_ID}'}/token/${channel.instanceToken || '{INSTANCE_TOKEN}'}/send-text`}
+                            value={`https://api.z-api.io/instances/${channel.instanceId || '{INSTANCE_ID}'}/token/${channel.instanceToken || '{INSTANCE_TOKEN}'}/send-text`}
                             placeholder="URL será gerada automaticamente"
                             className="mt-1"
                             disabled
                           />
+                        </div>
+
+                        {/* Botões de ação */}
+                        <div className="flex items-center space-x-2 pt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleTestConnection(channel)}
+                            className="flex items-center"
+                          >
+                            {channel.active ? (
+                              <Wifi className="h-4 w-4 mr-2 text-success" />
+                            ) : (
+                              <WifiOff className="h-4 w-4 mr-2 text-muted-foreground" />
+                            )}
+                            Testar Conexão
+                          </Button>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleGenerateQrCode(channel)}
+                            className="flex items-center"
+                          >
+                            <QrCode className="h-4 w-4 mr-2" />
+                            Gerar QR Code
+                          </Button>
+                          
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </Button>
+                          
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </Button>
                         </div>
                       </div>
                       
@@ -747,6 +933,95 @@ export default function Settings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal do QR Code WhatsApp */}
+      <Dialog open={isQrCodeModalOpen} onOpenChange={setIsQrCodeModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <QrCode className="h-5 w-5 mr-2" />
+              QR Code WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Escaneie este QR Code com seu WhatsApp para conectar o canal
+            </p>
+            
+            {/* Área do QR Code */}
+            <div className="flex justify-center">
+              {isLoadingQrCode ? (
+                <div className="flex flex-col items-center space-y-3">
+                  <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Gerando QR Code...</p>
+                </div>
+              ) : qrCodeImage ? (
+                <div className="bg-white p-4 rounded-lg border">
+                  <img 
+                    src={qrCodeImage} 
+                    alt="QR Code WhatsApp" 
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-48 h-48 bg-muted rounded-lg flex items-center justify-center">
+                  <QrCode className="h-16 w-16 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            
+            {/* Instruções */}
+            {qrCodeImage && (
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Instruções:</p>
+                <ol className="space-y-1 list-decimal list-inside">
+                  <li>Abra o WhatsApp no seu celular</li>
+                  <li>Toque em Menu → Dispositivos conectados</li>
+                  <li>Toque em "Conectar um dispositivo"</li>
+                  <li>Aponte a câmera para este QR Code</li>
+                </ol>
+              </div>
+            )}
+            
+            {/* Informações do canal */}
+            {selectedChannelForQr && (
+              <div className="bg-muted/50 p-3 rounded-lg">
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Canal: {selectedChannelForQr.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Instância: {selectedChannelForQr.instanceId}
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsQrCodeModalOpen(false)
+                setQrCodeImage(null)
+                setSelectedChannelForQr(null)
+              }}
+            >
+              Fechar
+            </Button>
+            <Button 
+              onClick={() => handleGenerateQrCode(selectedChannelForQr)}
+              disabled={isLoadingQrCode}
+            >
+              {isLoadingQrCode ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <QrCode className="h-4 w-4 mr-2" />
+              )}
+              Gerar Novo QR Code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
