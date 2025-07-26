@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,10 +14,58 @@ import {
   Star,
   Filter,
   CheckCircle,
-  RotateCcw
+  RotateCcw,
+  Loader2
 } from "lucide-react"
 
-// Mock data para conversas
+// Função para gerar conversas mock para simulação
+const generateMockConversation = (id: number) => {
+  const names = [
+    "Maria Silva", "João Santos", "Ana Costa", "Pedro Oliveira", "Carla Lima",
+    "Rafael Santos", "Lucia Fernandes", "Carlos Alberto", "Fernanda Souza", "Marcos Pereira",
+    "Juliana Castro", "Roberto Alves", "Patrícia Moreira", "Antonio Silva", "Camila Rodrigues",
+    "Eduardo Santos", "Melissa Costa", "Felipe Araújo", "Gabriela Lima", "Thiago Martins"
+  ]
+  
+  const channels = ["whatsapp", "instagram", "facebook", "email"]
+  const statuses = ["pending", "answered", "closed"]
+  const messages = [
+    "Olá, tenho interesse nos seus produtos",
+    "Gostaria de saber mais informações",
+    "Quando vocês podem fazer uma apresentação?",
+    "Obrigado pelo atendimento!",
+    "Preciso de ajuda com meu pedido",
+    "Qual o prazo de entrega?",
+    "Vocês fazem entrega na minha região?",
+    "Muito obrigado pela atenção",
+    "Estou interessado em fazer uma compra",
+    "Podem me enviar o catálogo?"
+  ]
+  
+  const randomName = names[Math.floor(Math.random() * names.length)]
+  const randomChannel = channels[Math.floor(Math.random() * channels.length)]
+  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)]
+  const randomMessage = messages[Math.floor(Math.random() * messages.length)]
+  const randomUnread = Math.floor(Math.random() * 5)
+  const randomHour = String(Math.floor(Math.random() * 24)).padStart(2, '0')
+  const randomMinute = String(Math.floor(Math.random() * 60)).padStart(2, '0')
+  
+  return {
+    id,
+    name: randomName,
+    channel: randomChannel,
+    lastMessage: randomMessage,
+    timestamp: `${randomHour}:${randomMinute}`,
+    unreadCount: randomUnread,
+    isPinned: Math.random() > 0.9,
+    isFavorite: Math.random() > 0.8,
+    isResolved: Math.random() > 0.7,
+    avatar: null,
+    status: randomStatus
+  }
+}
+
+// Mock data inicial para conversas
 const initialConversations = [
   {
     id: 1,
@@ -30,7 +78,7 @@ const initialConversations = [
     isFavorite: true,
     isResolved: false,
     avatar: null,
-    status: "pending" // pending, answered, closed
+    status: "pending"
   },
   {
     id: 2,
@@ -71,6 +119,8 @@ const initialConversations = [
     avatar: null,
     status: "closed"
   },
+  // Gerar mais conversas iniciais
+  ...Array.from({ length: 16 }, (_, i) => generateMockConversation(i + 5))
 ]
 
 type FilterType = "all" | "unread" | "favorites" | "active" | "resolved"
@@ -111,6 +161,64 @@ interface ConversationListProps {
 export function ConversationList({ selectedConversation, onSelectConversation }: ConversationListProps) {
   const [conversations, setConversations] = useState(initialConversations)
   const [activeFilter, setActiveFilter] = useState<FilterType>("all")
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const observerRef = useRef<HTMLDivElement>(null)
+
+  // Simular carregamento de mais conversas
+  const loadMoreConversations = useCallback(async () => {
+    if (loading || !hasMore) return
+
+    setLoading(true)
+    
+    // Simular delay de API
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    const conversationsPerPage = 20
+    const startId = conversations.length + 1
+    const newConversations = Array.from(
+      { length: conversationsPerPage }, 
+      (_, i) => generateMockConversation(startId + i)
+    )
+
+    setConversations(prev => [...prev, ...newConversations])
+    setPage(prev => prev + 1)
+    
+    // Simular limite de páginas (máximo 10 páginas = 200 conversas)
+    if (page >= 10) {
+      setHasMore(false)
+    }
+    
+    setLoading(false)
+  }, [loading, hasMore, conversations.length, page])
+
+  // Intersection Observer para detectar quando chegou ao final da lista
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0]
+        if (target.isIntersecting && hasMore && !loading) {
+          loadMoreConversations()
+        }
+      },
+      {
+        root: null,
+        rootMargin: '100px',
+        threshold: 0.1
+      }
+    )
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current)
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observer.unobserve(observerRef.current)
+      }
+    }
+  }, [loadMoreConversations, hasMore, loading])
 
   const toggleFavorite = (id: number, event: React.MouseEvent) => {
     event.stopPropagation()
@@ -320,17 +428,34 @@ export function ConversationList({ selectedConversation, onSelectConversation }:
             </div>
           </Card>
         ))}
+        
+        {/* Loading indicator e observador para scroll infinito */}
+        {loading && (
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <span className="text-sm text-muted-foreground">Carregando mais conversas...</span>
+          </div>
+        )}
+        
+        {/* Elemento observado para detectar final da lista */}
+        <div ref={observerRef} className="h-4" />
+        
+        {/* Indicador quando não há mais conversas */}
+        {!hasMore && conversations.length > 20 && (
+          <div className="flex items-center justify-center p-4">
+            <span className="text-xs text-muted-foreground">
+              Todas as conversas foram carregadas ({conversations.length} total)
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Footer com ações */}
+      {/* Footer com informações de performance */}
       <div className="p-4 border-t border-border">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full"
-        >
-          Carregar mais conversas
-        </Button>
+        <div className="text-xs text-muted-foreground text-center">
+          {filteredConversations.length} de {conversations.length} conversas
+          {loading && " • Carregando..."}
+        </div>
       </div>
     </div>
   )
