@@ -8,6 +8,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -20,7 +24,8 @@ import {
   Save,
   Plus,
   Edit,
-  Trash2
+  Trash2,
+  X
 } from "lucide-react"
 
 const teams = [
@@ -45,6 +50,18 @@ const otherChannels = [
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile")
+  const [teamsList, setTeamsList] = useState(teams)
+  const [isNewTeamModalOpen, setIsNewTeamModalOpen] = useState(false)
+  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false)
+  const [isDeleteTeamDialogOpen, setIsDeleteTeamDialogOpen] = useState(false)
+  const [editingTeam, setEditingTeam] = useState<any>(null)
+  const [deletingTeam, setDeletingTeam] = useState<any>(null)
+  const [newTeamData, setNewTeamData] = useState({
+    name: "",
+    color: "bg-primary",
+    members: 0
+  })
+  const { toast } = useToast()
 
   const tabs = [
     { id: "profile", label: "Perfil", icon: User },
@@ -54,6 +71,77 @@ export default function Settings() {
     { id: "appearance", label: "Aparência", icon: Palette },
     { id: "security", label: "Segurança", icon: Shield }
   ]
+
+  // Cores disponíveis para as equipes
+  const teamColors = [
+    { value: "bg-primary", label: "Azul", class: "bg-primary" },
+    { value: "bg-accent", label: "Verde", class: "bg-accent" },
+    { value: "bg-warning", label: "Amarelo", class: "bg-warning" },
+    { value: "bg-destructive", label: "Vermelho", class: "bg-destructive" },
+    { value: "bg-purple-500", label: "Roxo", class: "bg-purple-500" },
+    { value: "bg-pink-500", label: "Rosa", class: "bg-pink-500" },
+    { value: "bg-orange-500", label: "Laranja", class: "bg-orange-500" },
+    { value: "bg-teal-500", label: "Turquesa", class: "bg-teal-500" }
+  ]
+
+  // Função para criar nova equipe
+  const handleCreateTeam = () => {
+    if (!newTeamData.name.trim()) {
+      toast({ title: "Nome da equipe é obrigatório", variant: "destructive" })
+      return
+    }
+
+    const newTeam = {
+      id: Math.max(...teamsList.map(t => t.id)) + 1,
+      name: newTeamData.name,
+      color: newTeamData.color,
+      members: 0
+    }
+
+    setTeamsList(prev => [...prev, newTeam])
+    toast({ title: "Equipe criada com sucesso!" })
+    setIsNewTeamModalOpen(false)
+    setNewTeamData({ name: "", color: "bg-primary", members: 0 })
+  }
+
+  // Função para editar equipe
+  const handleEditTeam = (team: any) => {
+    setEditingTeam({ ...team })
+    setIsEditTeamModalOpen(true)
+  }
+
+  // Função para salvar edição da equipe
+  const handleSaveEditTeam = () => {
+    if (!editingTeam.name.trim()) {
+      toast({ title: "Nome da equipe é obrigatório", variant: "destructive" })
+      return
+    }
+
+    setTeamsList(prev => prev.map(team => 
+      team.id === editingTeam.id ? editingTeam : team
+    ))
+    
+    toast({ title: "Equipe atualizada com sucesso!" })
+    setIsEditTeamModalOpen(false)
+    setEditingTeam(null)
+  }
+
+  // Função para confirmar exclusão
+  const handleDeleteTeam = (team: any) => {
+    setDeletingTeam(team)
+    setIsDeleteTeamDialogOpen(true)
+  }
+
+  // Função para excluir equipe
+  const confirmDeleteTeam = () => {
+    setTeamsList(prev => prev.filter(team => team.id !== deletingTeam.id))
+    toast({ 
+      title: "Equipe excluída", 
+      description: `A equipe "${deletingTeam.name}" foi removida` 
+    })
+    setIsDeleteTeamDialogOpen(false)
+    setDeletingTeam(null)
+  }
 
   return (
     <div className="h-screen bg-background overflow-y-auto">
@@ -161,14 +249,14 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     Equipes
-                    <Button>
+                    <Button onClick={() => setIsNewTeamModalOpen(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       Nova Equipe
                     </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {teams.map((team) => (
+                  {teamsList.map((team) => (
                     <Card key={team.id} className="border border-border">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -182,10 +270,21 @@ export default function Settings() {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEditTeam(team)}
+                              title="Editar equipe"
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-destructive">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-destructive" 
+                              onClick={() => handleDeleteTeam(team)}
+                              title="Excluir equipe"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -193,6 +292,18 @@ export default function Settings() {
                       </CardContent>
                     </Card>
                   ))}
+                  
+                  {teamsList.length === 0 && (
+                    <div className="text-center py-8">
+                      <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">
+                        Nenhuma equipe criada
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Crie sua primeira equipe para organizar melhor seus atendentes
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -490,6 +601,152 @@ export default function Settings() {
           )}
         </div>
       </div>
+
+      {/* Modal de Nova Equipe */}
+      <Dialog open={isNewTeamModalOpen} onOpenChange={setIsNewTeamModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Plus className="h-5 w-5 mr-2" />
+              Nova Equipe
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="team-name">Nome da Equipe *</Label>
+              <Input
+                id="team-name"
+                placeholder="Ex: Vendas, Suporte, Marketing..."
+                value={newTeamData.name}
+                onChange={(e) => setNewTeamData({...newTeamData, name: e.target.value})}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="team-color">Cor da Equipe</Label>
+              <Select value={newTeamData.color} onValueChange={(value) => setNewTeamData({...newTeamData, color: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {teamColors.map((color) => (
+                    <SelectItem key={color.value} value={color.value}>
+                      <div className="flex items-center">
+                        <div className={`w-4 h-4 rounded-full ${color.class} mr-2`} />
+                        {color.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => {
+              setIsNewTeamModalOpen(false)
+              setNewTeamData({ name: "", color: "bg-primary", members: 0 })
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateTeam} disabled={!newTeamData.name.trim()}>
+              <Save className="h-4 w-4 mr-2" />
+              Criar Equipe
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição de Equipe */}
+      <Dialog open={isEditTeamModalOpen} onOpenChange={setIsEditTeamModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2" />
+              Editar Equipe
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editingTeam && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-team-name">Nome da Equipe *</Label>
+                <Input
+                  id="edit-team-name"
+                  value={editingTeam.name}
+                  onChange={(e) => setEditingTeam({...editingTeam, name: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-team-color">Cor da Equipe</Label>
+                <Select value={editingTeam.color} onValueChange={(value) => setEditingTeam({...editingTeam, color: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teamColors.map((color) => (
+                      <SelectItem key={color.value} value={color.value}>
+                        <div className="flex items-center">
+                          <div className={`w-4 h-4 rounded-full ${color.class} mr-2`} />
+                          {color.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-team-members">Membros</Label>
+                <Input
+                  id="edit-team-members"
+                  type="number"
+                  min="0"
+                  value={editingTeam.members}
+                  onChange={(e) => setEditingTeam({...editingTeam, members: parseInt(e.target.value) || 0})}
+                />
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => {
+              setIsEditTeamModalOpen(false)
+              setEditingTeam(null)
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEditTeam} disabled={!editingTeam?.name?.trim()}>
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={isDeleteTeamDialogOpen} onOpenChange={setIsDeleteTeamDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a equipe <strong>{deletingTeam?.name}</strong>?
+              Esta ação não pode ser desfeita e todos os membros serão removidos da equipe.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteTeam}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir Equipe
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
